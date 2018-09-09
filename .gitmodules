@@ -1,0 +1,3 @@
+[submodule "submodules/openzeppelin-zos"]
+	path = submodules/openzeppelin-zos
+	url = https://github.com/OpenZeppelin/openzeppelin-zos
