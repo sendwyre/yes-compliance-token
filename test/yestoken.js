@@ -1,18 +1,26 @@
 var YesComplianceTokenV1 = artifacts.require("./YesComplianceTokenV1.sol");
 
 contract('YesComplianceTokenV1', function (accounts) {
-    // var
-    // it("should create ", function () {
-    //     return YesComplianceTokenV1.deployed().then(function (instance) {
-    //         instance.setEntityActive
-    //         return instance.mint(accounts[1], '0', true);
-    //         // getBalance.call(accounts[0]);
-    //     }).then(function (tokenid) {
-    //         YesComplianceTokenV1.
-    //
-    //         assert.equal(balance.valueOf(), 10000, "10000 wasn't in the first account");
-    //     });
-    // });
+    var ENTITY0 = 'ENTITY0';
+    it("should mint a new minter token", function () {
+        return YesComplianceTokenV1.deployed().then(function (contract) {
+            // activate the entity
+            return contract.activate(ENTITY0, 840, 0)
+                .then(function () {
+                    // mint a minter token
+                    return contract.mint(accounts[1], ENTITY0, true);
+                }); // US individual
+
+            // return instance.mint(accounts[1], '0', true);
+            // getBalance.call(accounts[0]);
+        });
+        // .then(function () {
+        //     // mint a minter token
+        //     return instance.mint(accounts[1], ENTITY0, true);
+        //     // YesComplianceTokenV1.
+        //     // assert.equal(balance.valueOf(), 10000, "10000 wasn't in the first account");
+        // }).then(function());
+    });
     // it("should call a function that depends on a linked library", function () {
     //     var meta;
     //     var metaCoinBalance;

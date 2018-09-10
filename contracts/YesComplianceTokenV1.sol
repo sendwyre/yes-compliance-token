@@ -19,7 +19,7 @@ import "../submodules/openzeppelin-zos/contracts/token/ERC20/ERC20.sol";
  *    in this circumstance will fail
  *  -
  */
-contract YesComplianceTokenV1 is ERC721Token, Upgradeable /*, ERC165 */ {
+contract YesComplianceTokenV1 is ERC721Token /*, Upgradeable /*, ERC165 */ {
 
     // todo could shorten the entity IDs to anything 160+ to make this cheaper
 
@@ -39,11 +39,6 @@ contract YesComplianceTokenV1 is ERC721Token, Upgradeable /*, ERC165 */ {
 
         /** used for creating reliable token IDs */
         uint64 tokenIdCounter;
-
-//        /** must be true for any of the present state to be considered valid. otherwise, under review (temporary) */
-//        bool active;
-
-
 
         /**
          * maps ISO-3166-1 country codes to "yesmask" 64-bitmask. when any bit is 1, this is an attestation
@@ -66,6 +61,7 @@ contract YesComplianceTokenV1 is ERC721Token, Upgradeable /*, ERC165 */ {
 
     /** all fields we want to add per-token */
     struct TokenRecord {
+        /** true if this token can mint/burn on behalf of this entity */
         bool minter;
 
         /** position of the tokenId in TokenRecord.tokenIds */
@@ -93,7 +89,7 @@ contract YesComplianceTokenV1 is ERC721Token, Upgradeable /*, ERC165 */ {
     function initialize() public {
         // _sizes[bytes4(sha3("getUint()"))] = 32;
         // _sizes[bytes4(sha3("requireYes(address,uint16,uint8)"))] = 32;
-        _sizes[bytes4(sha3("mint(address,bool)"))] = 256;
+        // _sizes[bytes4(sha3("mint(address,bool)"))] = 256;
         // todo ERC721 value-returning methods here
     }
 
@@ -175,19 +171,19 @@ contract YesComplianceTokenV1 is ERC721Token, Upgradeable /*, ERC165 */ {
         EntityRecord storage s = entity(_entityId);
         uint256 tokenId = uint256(keccak256(abi.encodePacked(_entityId, s.tokenIdCounter++)));
         super._mint(_to, tokenId);
-        tokenRecordById[tokenId].tokenIdIdx = s.tokenIds.length;
+        tokenRecordById[tokenId].tokenIdIdx = uint32(s.tokenIds.length);
         tokenRecordById[tokenId].minter = _minter;
         s.tokenIds.push(tokenId);
         entityIdByTokenId[tokenId] = _entityId;
         return tokenId;
     }
 
-    function entity(uint256 _entityId) internal returns (EntityRecord) {
+    function entity(uint256 _entityId) internal returns (EntityRecord storage) {
         require(_entityId > 0);
         EntityRecord storage s = entityRecordById[_entityId];
         if(s.init) return s;
         s.init = true;
-        s.entityIdIdx = allEntityIds.length;
+        s.entityIdIdx = uint32(allEntityIds.length);
         allEntityIds.push(_entityId);
         return s;
     }
