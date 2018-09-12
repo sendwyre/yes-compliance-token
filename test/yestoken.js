@@ -1,76 +1,100 @@
-var YesComplianceTokenV1 = artifacts.require("./YesComplianceTokenV1.sol");
+var WyreYesComplianceToken = artifacts.require("./WyreYesComplianceToken.sol");
 
-contract('YesComplianceTokenV1', function (accounts) {
-    var ENTITY0 = 'ENTITY0';
-    it("should mint a new minter token", function () {
-        return YesComplianceTokenV1.deployed().then(function (contract) {
+contract('WyreYesComplianceToken', function (accounts) {
+    var ENTITY0 = 1;
+
+    var HOLDER_ACCOUNT1 = accounts[1];
+    var HOLDER_ACCOUNT2 = accounts[2];
+    var NONHOLDER_ACCOUNT1 = accounts[3];
+    // var ACCOUNT1 = ACCOUNT1;
+
+    // todo verify non-minter tokens cannot mint
+    // todo verify minter tokens can mint
+    // todo verify move
+
+    it("should pass non-minting US token holder", function () {
+        return WyreYesComplianceToken.deployed().then(function (contract) {
             // activate the entity
-            return contract.activate(ENTITY0, 840, 0)
-                .then(function () {
-                    // mint a minter token
-                    return contract.mint(accounts[1], ENTITY0, true);
-                }); // US individual
-
-            // return instance.mint(accounts[1], '0', true);
-            // getBalance.call(accounts[0]);
+            return contract.activate(ENTITY0, 840, 1).then(function () {
+                // mint a token
+                return contract.ownerMint(HOLDER_ACCOUNT1, ENTITY0, false, { from: accounts[0] });
+            }).then(function(t1result) {
+                return contract.requireYes.call(HOLDER_ACCOUNT1, 840, 1).then(function(requireResult) {
+                    assert.equal(requireResult, true);
+                });
+            });
         });
-        // .then(function () {
-        //     // mint a minter token
-        //     return instance.mint(accounts[1], ENTITY0, true);
-        //     // YesComplianceTokenV1.
-        //     // assert.equal(balance.valueOf(), 10000, "10000 wasn't in the first account");
-        // }).then(function());
     });
-    // it("should call a function that depends on a linked library", function () {
-    //     var meta;
-    //     var metaCoinBalance;
-    //     var metaCoinEthBalance;
-    //
-    //     return MetaCoin.deployed().then(function (instance) {
-    //         meta = instance;
-    //         return meta.getBalance.call(accounts[0]);
-    //     }).then(function (outCoinBalance) {
-    //         metaCoinBalance = outCoinBalance.toNumber();
-    //         return meta.getBalanceInEth.call(accounts[0]);
-    //     }).then(function (outCoinBalanceEth) {
-    //         metaCoinEthBalance = outCoinBalanceEth.toNumber();
-    //     }).then(function () {
-    //         assert.equal(metaCoinEthBalance, 2 * metaCoinBalance, "Library function returned unexpected function, linkage may be broken");
-    //     });
-    // });
-    // it("should send coin correctly", function () {
-    //     var meta;
-    //
-    //     // Get initial balances of first and second account.
-    //     var account_one = accounts[0];
-    //     var account_two = accounts[1];
-    //
-    //     var account_one_starting_balance;
-    //     var account_two_starting_balance;
-    //     var account_one_ending_balance;
-    //     var account_two_ending_balance;
-    //
-    //     var amount = 10;
-    //
-    //     return MetaCoin.deployed().then(function (instance) {
-    //         meta = instance;
-    //         return meta.getBalance.call(account_one);
-    //     }).then(function (balance) {
-    //         account_one_starting_balance = balance.toNumber();
-    //         return meta.getBalance.call(account_two);
-    //     }).then(function (balance) {
-    //         account_two_starting_balance = balance.toNumber();
-    //         return meta.sendCoin(account_two, amount, {from: account_one});
-    //     }).then(function () {
-    //         return meta.getBalance.call(account_one);
-    //     }).then(function (balance) {
-    //         account_one_ending_balance = balance.toNumber();
-    //         return meta.getBalance.call(account_two);
-    //     }).then(function (balance) {
-    //         account_two_ending_balance = balance.toNumber();
-    //
-    //         assert.equal(account_one_ending_balance, account_one_starting_balance - amount, "Amount wasn't correctly taken from the sender");
-    //         assert.equal(account_two_ending_balance, account_two_starting_balance + amount, "Amount wasn't correctly sent to the receiver");
-    //     });
-    // });
+
+    it("should pass minting US token holder", function () {
+        return WyreYesComplianceToken.deployed().then(function (contract) {
+            // contract.
+            // activate the entity
+            return contract.activate(ENTITY0, 840, 1).then(function () {
+                // mint a token
+                return contract.ownerMint(HOLDER_ACCOUNT1, ENTITY0, true, { from: accounts[0] });
+            }).then(function(t1result) {
+                return contract.requireYes.call(HOLDER_ACCOUNT1, 840, 1).then(function(requireResult) {
+                    assert.equal(requireResult, true);
+                });
+            });
+        });
+    });
+
+    it("should not pass deactivated US token holder", function () {
+        return WyreYesComplianceToken.deployed().then(function (contract) {
+            return contract.requireYes.call(NONHOLDER_ACCOUNT1, 840, 1).then(function(requireResult) {
+                assert.equal(requireResult, false);
+            });
+        });
+    });
+
+    it("should mint a new minter token", function () {
+        return WyreYesComplianceToken.deployed().then(function (contract) {
+            // activate the entity
+            return contract.activate(ENTITY0, 840, 0).then(function () {
+                // mint a minter token
+                return contract.ownerMint(HOLDER_ACCOUNT1, ENTITY0, true, { from: accounts[0] });
+
+            }).then(function(t1result) {
+                return contract.mint.call(HOLDER_ACCOUNT2, false, { from: HOLDER_ACCOUNT1 }).then(function(token2) {
+                    return contract.mint(HOLDER_ACCOUNT2, false, { from: HOLDER_ACCOUNT1 });
+                });
+            });
+        });
+    });
+
+    describe('Token Holder', function() {
+        it("should move coin correctly", function () {
+            WyreYesComplianceToken.deployed().then(function(contract) {
+
+                var startBalances = {};
+                var endBalances = {};
+                var amount = 1;
+
+                contract.ownerMint(HOLDER_ACCOUNT1, ENTITY0, true, { from: accounts[0] }).then(function() {
+                    return contract.getBalance.call(HOLDER_ACCOUNT1);
+                }).then(function (balance) {
+                    startBalances[1] = balance.toNumber();
+                    return contract.getBalance.call(HOLDER_ACCOUNT2);
+                }).then(function (balance) {
+                    startBalances[2] = balance.toNumber();
+                    return contract.transferFrom(HOLDER_ACCOUNT1, HOLDER_ACCOUNT2, amount, {from: HOLDER_ACCOUNT1});
+                }).then(function () {
+                    return contract.getBalance.call(HOLDER_ACCOUNT1);
+                }).then(function (balance) {
+                    endBalances[1] = balance.toNumber();
+                    return contract.getBalance.call(HOLDER_ACCOUNT2);
+                }).then(function (balance) {
+                    endBalances[2] = balance.toNumber();
+
+                    assert.equal(endBalances[1], startBalances[1] - amount, "Amount wasn't correctly taken from the sender");
+                    assert.equal(endBalances[2], startBalances[2] + amount, "Amount wasn't correctly sent to the receiver");
+                });
+            });
+
+            // Get initial balances of first and second account.
+
+        });
+    });
 });
