@@ -21,7 +21,6 @@ contract YesComplianceTokenImpl is /*Upgradeable,*/ ERC721Token, YesComplianceTo
 
     /*
      events: entity updated, destroyed
-
      */
 
     /**
@@ -203,7 +202,7 @@ contract YesComplianceTokenImpl is /*Upgradeable,*/ ERC721Token, YesComplianceTo
         s.yesMarks.length = 0;
     }
 
-    function setLock(uint256 _entityId, bool _lock) external permission_super {
+    function setLocked(uint256 _entityId, bool _lock) external permission_super {
         EntityRecord storage s = entity(_entityId);
         s.locked = _lock;
     }
