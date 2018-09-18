@@ -22,7 +22,7 @@ pragma solidity ^0.4.24;
  *  - one entity may have many tokens across many addresses; they can mint and burn tokens tied to their identity at will
  *  - two token types: control & non-control. both carry compliance proof
  *  - control tokens let their holders mint and burn (within the same entity)
- *  - non-control tokens are solely for compliance
+ *  - non-control tokens are solely for compliance queries
  *  - a lock on the entity is used instead of token revocation to remove the cash burden assumed by a customer to
  *    redistribute a fleet of coins
  *  - all country codes should be via ISO-3166-1
@@ -34,14 +34,14 @@ pragma solidity ^0.4.24;
  *
  * Individual:
  * 1: financially compliant individual (country-wide/strictest) [*]
- * 2: accredited investor (invidivual) [840]
+ * 2: accredited investor (individual) [840]
  *
  * Business:
  * 16: financially compliant business (country-wide/strictest) [*]
  * 17: MSB [840]
  *
  */
-interface YesComplianceTokenV1 /* is ERC721Token /*, Upgradeable /*, ERC165 */ {
+interface YesComplianceTokenV1 /*, ERC165 */ {
 
     // PARTNER INTERFACE - functionality beyond 721 for facilitating partner queries and operations
 

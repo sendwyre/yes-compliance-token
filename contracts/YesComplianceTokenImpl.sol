@@ -11,10 +11,10 @@ import "./YesComplianceTokenV1.sol";
  *
  * todo exclusivity rules to prevent an entity being both an individual & business
  * todo finish entity destruction
- *
  */
-contract YesComplianceTokenImpl is /*Upgradeable,*/ ERC721Token, YesComplianceTokenV1 {
+contract YesComplianceTokenImpl is /*Upgradeable, */ERC721Token, YesComplianceTokenV1 {
 
+    /** 1024 is completely arbitrary: what should it really be? -tyson */
     uint64 private constant MAX_TOKENS_PER_ENTITY = 1024;
 
     // todo could shorten the entity IDs to anything 160+ to make this cheaper
@@ -33,13 +33,10 @@ contract YesComplianceTokenImpl is /*Upgradeable,*/ ERC721Token, YesComplianceTo
 
         /**
          * the possibly-country-speicifc YES being marked.
-         *
-
          */
         uint8 yes;
 
         // uint8 entityListIdx;
-
     }
 
     /**
@@ -69,7 +66,7 @@ contract YesComplianceTokenImpl is /*Upgradeable,*/ ERC721Token, YesComplianceTo
         uint256[] tokenIds;
 
         // type - biz vs individual, other enum/XOR attributes?
-        // trellisEndpoint?
+        // trellisEndpoint, towerEndpoint [?]
     }
 
     /** all fields we want to add per-token */

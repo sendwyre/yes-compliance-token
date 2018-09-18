@@ -14,6 +14,7 @@ contract Upgradeable {
     function replace(address target) internal {
         _upgradeable_impl = target;
         // _upgradeable_sizes = Upgradeable(target).getRValueSigs();
+        // Upgradeable(target).
         // target.delegatecall(bytes4(keccak256("initializeForUpgrades()")));
     }
 }
@@ -32,19 +33,18 @@ contract Dispatcher is Upgradeable {
     }
 
     function () payable public {
-//        address _impl = implementation();
-//        require(_impl != address(0));
-//        bytes memory data = msg.data;
-//
-//        assembly {
-//          let result := delegatecall(gas, _impl, add(data, 0x20), mload(data), 0, 0)
-//          let size := returndatasize
-//          let ptr := mload(0x40)
-//          returndatacopy(ptr, 0, size)
-//          switch result
-//          case 0 { revert(ptr, size) }
-//          default { return(ptr, size) }
-//        }
+        address _impl = _upgradeable_impl;
+        require(_upgradeable_impl != address(0));
+        bytes memory data = msg.data;
+        assembly {
+          let result := delegatecall(gas, _impl, add(data, 0x20), mload(data), 0, 0)
+          let size := returndatasize
+          let ptr := mload(0x40)
+          returndatacopy(ptr, 0, size)
+          switch result
+          case 0 { revert(ptr, size) }
+          default { return(ptr, size) }
+        }
     }
 
 //    function() payable public {
