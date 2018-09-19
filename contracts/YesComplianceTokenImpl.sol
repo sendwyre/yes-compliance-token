@@ -1,9 +1,6 @@
 pragma solidity ^0.4.24;
 
-// import "./Upgradeable.sol";
-import "../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol";
 import "./Upgradeable.sol";
-import "../submodules/openzeppelin-zos/contracts/token/ERC20/ERC20.sol";
 import "./YesComplianceTokenV1.sol";
 
 /**
@@ -12,7 +9,7 @@ import "./YesComplianceTokenV1.sol";
  * todo exclusivity rules to prevent an entity being both an individual & business
  * todo finish entity destruction
  */
-contract YesComplianceTokenImpl is /*Upgradeable, */ERC721Token, YesComplianceTokenV1 {
+contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
 
     /** 1024 is completely arbitrary: what should it really be? -tyson */
     uint64 private constant MAX_TOKENS_PER_ENTITY = 1024;
@@ -86,6 +83,7 @@ contract YesComplianceTokenImpl is /*Upgradeable, */ERC721Token, YesComplianceTo
     // CONTRACT STATE --------------------------------------------------------------------------------------------------
 
     address public ownerAddress;
+
     mapping(uint256 => EntityRecord) public entityRecordById;
     mapping(uint256 => TokenRecord) public tokenRecordById;
     mapping(uint256 => uint256) public entityIdByTokenId;
@@ -94,16 +92,26 @@ contract YesComplianceTokenImpl is /*Upgradeable, */ERC721Token, YesComplianceTo
     // bytes4 private constant InterfaceId_TokenstampV1 = '';
 
     constructor(string _name, string _symbol) public {
+        // the constructor is only used when deploying the contract outside the context of Upgradeable
+        _upgradeable_initialize();
         initialize(_name, _symbol);
+    }
+
+    /**
+     * executed in lieu of a constructor in a delegated context
+     */
+    function _upgradeable_initialize() public {
+        super._upgradeable_initialize();
         ownerAddress = msg.sender;
     }
 
-//    function initializeForUpgrades() public {
-//        // _sizes[bytes4(keccak256("getUint()"))] = 32;
-//        // _sizes[bytes4(keccak256("requireYes(address,uint16,uint8)"))] = 32;
-//        // _sizes[bytes4(keccak256("mint(address,bool)"))] = 256;
-//        // todo ERC721 value-returning methods here
-//    }
+    /**
+     * first-time initialization the contract/token
+     */
+    function initialize(string _name, string _symbol) public permission_super {
+        // todo gate for one-time only?
+        super.initialize(_name, _symbol);
+    }
 
     // YesComplianceTokenV1 Interface Methods --------------------------------------------------------------------------
 
@@ -114,6 +122,10 @@ contract YesComplianceTokenImpl is /*Upgradeable, */ERC721Token, YesComplianceTo
     function requireYes(address _address, uint16 _countryCode, uint8 _yes) external view {
         require(isYesInternal(_address, _countryCode, _yes));
     }
+
+//    function getYes(address _address, uint16 _countryCode) external view {
+//
+//    }
 
     function mint(address _to, bool _control) external returns (uint256) /* permission_mint_sender() */{
         uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);

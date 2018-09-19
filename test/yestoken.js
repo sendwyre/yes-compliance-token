@@ -3,7 +3,12 @@ let WyreYesComplianceToken = artifacts.require("./WyreYesComplianceToken.sol");
 /*
 NOTE:
 at time of writing this, 2018-09-18, darq-truffle is required for access to the web3 1.0
-interfaces, specifically bc of bugs regarding method override disambiguation
+interfaces, specifically bc of bugs regarding method overloading disambiguation
+
+https://github.com/trufflesuite/truffle-contract/blob/web3-one-readme/README.md
+-> Overloaded Solidity methods (credit to @rudolfix and @mcdee / PRs #75 and #94)
+
+
   */
 
 contract('WyreYesComplianceToken', function ([owner, ALICE_ADDR1, BOB_ADDR1, ALICE_ADDR2, NONHOLDER_ACCOUNT1]) {
@@ -195,13 +200,10 @@ contract('WyreYesComplianceToken', function ([owner, ALICE_ADDR1, BOB_ADDR1, ALI
     });
 
 
+    // todo test burns
+    // todo test moving coins around - general 721 testing
 
 
-
-
-
-
-    // todo move coins around - general 721 testing
 
     // describe('Token Holder', function() {
     //     it("should move coin correctly", function () {

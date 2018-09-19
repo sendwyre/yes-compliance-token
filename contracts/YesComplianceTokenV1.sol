@@ -1,5 +1,7 @@
 pragma solidity ^0.4.24;
 
+import "../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol";
+
 /**
  * an ERC721 "yes" compliance token supporting a collection of country-specific attributions which answer specific
  * compliance-related queries with YES. (attributions)
@@ -41,7 +43,7 @@ pragma solidity ^0.4.24;
  * 17: MSB [840]
  *
  */
-interface YesComplianceTokenV1 /*, ERC165 */ {
+contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
 
     // PARTNER INTERFACE - functionality beyond 721 for facilitating partner queries and operations
 
@@ -54,6 +56,8 @@ interface YesComplianceTokenV1 /*, ERC165 */ {
 
     /** same as isYes except as an imperative */
     function requireYes(address _address, uint16 _countryCode, uint8 _yes) external view ;
+
+    // function getYes(address _address, uint16 _countryCode)
 
     /**
      * minting with an implied entity. the caller must have a control token. will fail if _to already belongs
@@ -91,5 +95,6 @@ interface YesComplianceTokenV1 /*, ERC165 */ {
 
     // function isLocked(uint256 _entityId) ?
     // function isLocked(address _address) ? partner interface?
+
 
 }
