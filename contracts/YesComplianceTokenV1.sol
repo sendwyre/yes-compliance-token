@@ -29,19 +29,6 @@ import "../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol";
  *    redistribute a fleet of coins
  *  - all country codes should be via ISO-3166-1
  *
- * A YES mark (uint8) is a number which by convention maps to a specific compliance attestation, as given below.
- *
- * [*] means all country codes,
- * [840] means US only (probably needs revising) (ISO-3166-1 country code)
- *
- * Individual:
- * 1: financially compliant individual (country-wide/strictest) [*]
- * 2: accredited investor (individual) [840]
- *
- * Business:
- * 16: financially compliant business (country-wide/strictest) [*]
- * 17: MSB [840]
- *
  */
 contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
 
@@ -58,6 +45,8 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
     function requireYes(address _address, uint16 _countryCode, uint8 _yes) external view ;
 
     // function getYes(address _address, uint16 _countryCode)
+    // function getYes(uint256 _entityId, uint16 _countryCode)
+    // function getYes(uint256 _entityId)
 
     /**
      * minting with an implied entity. the caller must have a control token. will fail if _to already belongs
@@ -95,6 +84,5 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
 
     // function isLocked(uint256 _entityId) ?
     // function isLocked(address _address) ? partner interface?
-
 
 }
