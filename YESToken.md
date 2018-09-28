@@ -35,13 +35,11 @@ ensures that any partner attempting to query compliance status need not ask many
 query them all through a single token. The original owner of the contract (Wyre, in our case) ultimately controls
 the ecosystem of authorized validators.
 
-_Future_: Token 'proxying' to enable Wyre to delegate token recognition to a specific whitelist of other YES-compatible
-tokens so that other top-level minters could maintain their own networks of partners, yet remain queryable through a single
-token interface.
-
 ### Specification
 
 See the YES interface definition [here](contracts/yes/YesComplianceTokenV1.sol).
+
+#### Token Operation
 
 The YES system is made of two high-level token types: validator and identity. The token
 interface is provided solely for (standardized) flexibility in managing the status/permission of any particular Ethereum 
@@ -75,6 +73,28 @@ of needing to re-issue possibly many coins to many addresses.
 get burned. In systems which have no use to move the tokens around once they reach their target, this adds a small 
 degree of safety for tokens to be erroneously (or maliciously) moved.
 
+***Proxying:*** _TODO/Future/Maybe_: Token 'proxying' to enable Wyre to delegate token recognition to a specific whitelist 
+of other YES-compatible tokens so that other top-level minters could maintain their own networks of partners, yet 
+remain queryable through a single token interface.
+
+#### Validity, Liability
+
+The usage of these tokens ***does not*** relinquish the need for businesses themselves to always remain compliant. However,
+any business may establish an agreement with Wyre (or another ecosystem) which offloads the KYC/AML requirements to the
+ecosystem owner. In the case of applications which manage user-controlled funds, they are not money services businesses,
+as they do not custodialize their customers' funds. Therefore, they are not required to maintain these licenses. 
+
+However, this passes the buck of remaining compliant to the end-user. If someone wants to trade money with a friend, with an 
+exchange, with a business, anywhere - they want to know they are fully and properly handing over the liability of 
+what happens with those funds. They can only do this if there is a chain of liable, well-identified parties. They needn't
+know or maintain any personal details of the end-user; only a legal guarantee from the liable party. All ongoing reporting
+and fraud prevention
+is the responsibility of the liable party (Wyre), which may have delegated it further (through agreements) with other
+parties (validators). 
+
+By offering channels which give compliant users access to other compliant users, we
+create a very flexible but legally safe financial environment on the blockchain.
+
 #### Compliance Attestations 
 
 A YES mark (8-bit unsigned integer) is a number which, by convention, maps to a specific compliance attestation as given 
@@ -82,13 +102,13 @@ below.
 
 [*] means all country codes, [840] means US only (probably needs revising) (ISO-3166-1 country code)
 
-    Individual: (lower 4 bits)
-    1: financially compliant individual (country-wide/strictest) [*]
-    2: 2. accredited investor (individual) [840]
+    Individual: (most significant bit is 0)
+    1. financially compliant individual (country-wide/strictest) [*]
+    2. accredited investor (individual) [840]
 
-    Business: (upper 4 bits)
-    16. financially compliant business (country-wide/strictest) [*] 
-    17. MSB [840]
+    Business: (most significant bit is 1)
+    129. financially compliant business (country-wide/strictest) [*] 
+    130. Money Services Business [840]
 
 ***Regarding MSBs:*** todo
 
