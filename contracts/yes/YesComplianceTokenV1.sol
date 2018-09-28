@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol";
+import "../../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol";
 
 /**
  * an ERC721 "yes" compliance token supporting a collection of country-specific attributions which answer specific
@@ -67,6 +67,8 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
     /** minting done by the contract operator for an explicit entity */
     function mint(address _to, uint256 _entityId, bool _control) external returns (uint256);
 
+    // function mint(address _to, uint256 _entityId, bool _control, bool _final) external returns (uint256);
+
     /** adds a specific yes to an entity */
     function activate(uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
 
@@ -84,5 +86,8 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
 
     // function isLocked(uint256 _entityId) ?
     // function isLocked(address _address) ? partner interface?
+
+    // isFinalized
+    // finalize()
 
 }

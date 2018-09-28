@@ -1,4 +1,4 @@
-let WyreYesComplianceToken = artifacts.require("./WyreYesComplianceToken.sol");
+let WyreYesComplianceToken = artifacts.require("WyreYesComplianceToken");
 
 /*
 NOTE:

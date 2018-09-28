@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "./Upgradeable.sol";
+import "../Upgradeable.sol";
 import "./YesComplianceTokenV1.sol";
 
 /**

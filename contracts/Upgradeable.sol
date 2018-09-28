@@ -22,6 +22,8 @@ contract Upgradeable {
         _upgradeable_delegate = target;
         require(target.delegatecall(bytes4(keccak256("_upgradeable_initialize()"))));
     }
+
+    // todo must be able to re-assign owner! security!
 }
 
 /**
