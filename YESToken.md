@@ -96,8 +96,12 @@ and fraud prevention
 is the responsibility of the liable party (Wyre), which may have delegated it further (through agreements) with other
 parties (validators). 
 
+In the cases of custodializing customer funds, the applications must be operated by licensed money service businesses.
+In this case, they must follow all relevent reporting requirements. They may offload this compliance process to any 
+of the validators in the ecosystem by forming an agreement with them and leveraging the on-chain query API.
+
 By offering channels which give compliant users access to other compliant users, we
-create a very flexible but legally safe financial environment on the blockchain.
+create a very flexible but legally safe financial environment on the blockchain. In the cases of 
 
 #### Compliance Attestations 
 
