@@ -32,8 +32,8 @@ degree.
 
 One deployed contract of this token encompasses a single ecosystem of recognized minters in the space. This
 ensures that any partner attempting to query compliance status need not ask many minters separately, but rather
-query them all through a single token. The original owner of the contract (Wyre, in our case) ultimately controls
-the ecosystem of authorized validators.
+query them all through a single token. The _ecosystem owner_ (original owner of the contract - Wyre, in our case) 
+ultimately controls the list of authorized validators.
 
 ### Specification
 
@@ -45,9 +45,13 @@ The YES system is made of two high-level token types: validator and identity. Th
 interface is provided solely for (standardized) flexibility in managing the status/permission of any particular Ethereum 
 address.
 
-Validator tokens are those held by the
-validators giving them permission to mint new compliance tokens for any identity, and add/remove the YES compliance 
-attestations. Identity tokens represent a link to some formally identified entity - business or individual - which has met 
+*Validator tokens* are those held by
+validators giving them permission to mint new compliance tokens for identities they have vetted, assigning 
+the set of active YES compliance attestations.
+They are the parties who are interacting with the end-user to process their proof of identity, and they have reporting
+agreements established with the ecosystem owner.
+
+Identity tokens, on the other hand, represent a link to some formally identified entity - business or individual - which has met 
 specific compliance requirements, as attested to by the validators. 
 
 Within the context of identity tokens, there are two subtypes: standard and control. Both are linked to an identified
@@ -60,8 +64,8 @@ one address can be associated with at most a single entity (but one address coul
 identity).
 
 As such, any entity may have many identity tokens which all link back to a single entity compliance status. That entity
-consists of a collection of specific attestations as defined by the section below. Querying the token (via `isYes` or `requireYes`)
-without specifying an explicit set of allowable validators implies all validators are considered. 
+consists of a collection of specific attestations as defined by the section below. Querying the token (via `isYes` 
+or `requireYes`) without specifying an explicit set of allowable validators implies all validators are considered. 
 
 ***Locking:*** An entity may be locked. This may be invoked by any validator against any entity and suspends that entity from 
 receiving any compliance approval. This is intended to function in response to any type of compliance flag that throws
@@ -69,7 +73,7 @@ the overall validity of the identity into question - as in the case of possible 
 the happy case where the alert is cleared, we save a lot of fees and token-holder effort by flipping one bit instead
 of needing to re-issue possibly many coins to many addresses. 
 
-***Finalization:*** Permissable to any token holder, this will prevent the token from ever being moved. It could only
+***Finalization:*** Permissible to any token holder, this will prevent the token from ever being moved. It could only
 get burned. In systems which have no use to move the tokens around once they reach their target, this adds a small 
 degree of safety for tokens to be erroneously (or maliciously) moved.
 
@@ -120,5 +124,8 @@ todo
 
 todo
 
+- Many validators may co-exist in a given ecosystem. This protocol grants them collective access to a shared 
+  pool of secure identities. 
+- todo
 
     
