@@ -20,18 +20,18 @@ this proof, and for _integrators_ to query the state of the proof. It furthermor
 design fosters a safe, legally compliant blockchain environment.
 
 We provision the compliance attestation through ERC721-compliant non-fungible tokens. This interfacing allows end-users
-to independently, freely, and securely associate or de-associate their compliance status with a large number of Ethereum 
-accounts at their own discretion.
+to independently, freely, and securely associate or de-associate their compliance status with many Ethereum 
+addresses at their own discretion.
 
 These tokens are issued by _validators_. These are organizations which provide specific
-verifications for end-users; ultimately, the minter reputation backs the attestations they distribute. The specific 
-statements allowable are defined authoritatively by this document and may be country-specific.
+verifications for end-users; ultimately, the ecosystem owner (Wyre) backs the attestations distributed on the network. 
+The specific attestations allowed are defined authoritatively by this document and may be country-specific.
 
 When an end-user attempts to interact with some 3rd-party financial service or application which supports this protocol 
-(an _integrator_), they can query the compliance status of the end-user on the blockchain. Beyond the ERC721 address 
-management interface, a set of query APIs are defined so that the partner can contextualize their needs and 
-quickly acquire an authoritative answer. All defined attestations are boolean; they may be present or not, without 
-degree.
+(an _integrator_), the application can quickly query the compliance status of the end-user on the blockchain. Beyond 
+the ERC721 interface, a set of query APIs are defined so that the partner can contextualize their needs and 
+acquire a direct authoritative answer on the compliance status of a particular address. All defined attestations
+are boolean; they may be present or not, without degree.
 
 One deployed contract of this token encompasses a single ecosystem of recognized minters in the space. This
 ensures that any partner attempting to query compliance status need not ask many minters separately, but rather
@@ -54,6 +54,10 @@ functionality (and appearance!), except that control tokens grant their holder a
 is made solely for security. They permit their holders the ability to mint new tokens as well as burn 
 existing ones. Standard tokens are used solely for identification; they provide no minting powers, though do allow 
 self-destruction/self-burn.
+
+Typically, a validator would mint and send one new control to a user once their compliance status is passing. Because 
+it's a control token, the user would be free to create more of them (control or standard) and distribute them to any
+other addresses they would like to identify with (using the increasingly well-known ERC721).
 
 ***Validators*** are entities with the `129. Ecosystem Validator` YES mark. They are the parties who are
 interacting with the end-user to process their proof of identity, and they have reporting (and liability?)
