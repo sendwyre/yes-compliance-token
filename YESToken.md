@@ -8,13 +8,16 @@ status: Draft
 created: 2018-09-08
 ---
 
+ROUGH DRAFT
+
 ## YES Compliance Token
 
 ### Abstract
 
 This document describes the operation of a flexible, lightweight on-chain compliance ecosystem. It provides a simple,
 privacy-focused mechanism for _end-users_ to acquire proof-of-compliance tokens, for _validators_ to validate and attest
-this proof, and for _integrators_ to query the state of the proof.
+this proof, and for _integrators_ to query the state of the proof. It furthermore defines the mechanics of how this
+design fosters a safe, legally compliant blockchain environment.
 
 We provision the compliance attestation through ERC721-compliant non-fungible tokens. This interfacing allows end-users
 to independently, freely, and securely associate or de-associate their compliance status with a large number of Ethereum 
@@ -41,31 +44,30 @@ See the YES interface definition [here](contracts/yes/YesComplianceTokenV1.sol).
 
 #### Token Operation
 
-The YES system is made of two high-level token types: validator and identity. The token
-interface is provided solely for (standardized) flexibility in managing the status/permission of any particular Ethereum 
-address.
+The YES system distinguishes between _tokens_ and _entities_. An entity is a business or individual which maintains
+some verified compliance status. An entity may have many tokens. One token will always have a single entity. All
+token are linked to an identified entity and can be used as proof-of-compliance. They represent a formally identified 
+entity - business or individual - which has met specific compliance requirements, as attested to by one or more validators. 
 
-*Validator tokens* are those held by
-validators giving them permission to mint new compliance tokens for identities they have vetted, assigning 
-the set of active YES compliance attestations.
-They are the parties who are interacting with the end-user to process their proof of identity, and they have reporting
-agreements established with the ecosystem owner.
+There are two high-level token types: standard and control. Both tokens are generally identical in 
+functionality (and appearance!), except that control tokens grant their holder additional permissions. This distinction
+is made solely for security. They permit their holders the ability to mint new tokens as well as burn 
+existing ones. Standard tokens are used solely for identification; they provide no minting powers, though do allow 
+self-destruction/self-burn.
 
-Identity tokens, on the other hand, represent a link to some formally identified entity - business or individual - which has met 
-specific compliance requirements, as attested to by the validators. 
-
-Within the context of identity tokens, there are two subtypes: standard and control. Both are linked to an identified
-entity so either can be used equivalently as holder-proof-of-compliance. However, control tokens additionally give their 
-holder permission to mint new compliance tokens (either control or standard) or burn other tokens (only those linked
-to their identity), enabling them the flexibility to manage any set of addresses however they choose.
+***Validators*** are entities with the `129. Ecosystem Validator` YES mark. They are the parties who are
+interacting with the end-user to process their proof of identity, and they have reporting (and liability?)
+agreements established with the ecosystem owner. This gives that entity the ability to create new YES attestations 
+for any entity. (Though, only the ecosystem owner has the ability to mark entities with with `129`) 
+For auditability, all YES attestations marked carry the set of validator ID(s) which validated them. 
 
 Attempting to move a token to an address that already possesses a token linking it to a different address is forbidden;
-one address can be associated with at most a single entity (but one address could own many tokens linked to their own 
-identity).
+one address can be associated with at most a single entity (but one address could own many tokens linked to that single
+entity).
 
-As such, any entity may have many identity tokens which all link back to a single entity compliance status. That entity
+As such, any entity may have many tokens which all link back to a single record of compliance (entity). That entity
 consists of a collection of specific attestations as defined by the section below. Querying the token (via `isYes` 
-or `requireYes`) without specifying an explicit set of allowable validators implies all validators are considered. 
+or `requireYes`) without specifying an explicit set of allowable validators implies any validator is considered. 
 
 ***Locking:*** An entity may be locked. This may be invoked by any validator against any entity and suspends that entity from 
 receiving any compliance approval. This is intended to function in response to any type of compliance flag that throws
@@ -77,11 +79,11 @@ of needing to re-issue possibly many coins to many addresses.
 get burned. In systems which have no use to move the tokens around once they reach their target, this adds a small 
 degree of safety for tokens to be erroneously (or maliciously) moved.
 
-***Proxying:*** _TODO/Future/Maybe_: Token 'proxying' to enable Wyre to delegate token recognition to a specific whitelist 
-of other YES-compatible tokens so that other top-level minters could maintain their own networks of partners, yet 
-remain queryable through a single token interface.
+***Proxying:*** _TODO/Future/Maybe_: Token 'proxying' to enable the ecosystem owner to delegate token recognition to 
+a specific whitelist of other YES-compatible tokens so that other top-level minters could maintain their own networks 
+of partners, yet remain queryable through a single token interface.
 
-#### Validity, Liability
+#### Regulatory Mechanics
 
 The usage of these tokens ***does not*** relinquish the need for businesses themselves to always remain compliant. However,
 any business may establish an agreement with Wyre (or another ecosystem) which offloads the KYC/AML requirements to the
@@ -91,45 +93,59 @@ as they do not custodialize their customers' funds. Therefore, they are not requ
 However, this passes the buck of remaining compliant to the end-user. If someone wants to trade money with a friend, with an 
 exchange, with a business, anywhere - they want to know they are fully and properly handing over the liability of 
 what happens with those funds. They can only do this if there is a chain of liable, well-identified parties. They needn't
-know or maintain any personal details of the end-user; only a legal guarantee from the liable party. All ongoing reporting
+know or maintain any personal details of the end-user; only a legal guarantee from a liable party. All ongoing reporting
 and fraud prevention
 is the responsibility of the liable party (Wyre), which may have delegated it further (through agreements) with other
 parties (validators). 
 
-In the cases of custodializing customer funds, the applications must be operated by licensed money service businesses.
-In this case, they must follow all relevent reporting requirements. They may offload this compliance process to any 
-of the validators in the ecosystem by forming an agreement with them and leveraging the on-chain query API.
+In the cases of businesses which custodialize their customers' funds, they must (at the least, in the US) be licensed 
+money service businesses. They must follow all relevant reporting requirements as dictated by their business practices
+in their own locality, and this protocol does nothing to alleviate those requirements. However, this protocol does
+offer an avenue to enable simpler offloading of this relatively rigorous process to any of the validators in the 
+ecosystem. By forming an agreement with a validator, enabling an end-user UX flow for such processing, they can gain
+access to a much larger body of verified customers through the on-chain query API. 
 
 By offering channels which give compliant users access to other compliant users, we
-create a very flexible but legally safe financial environment on the blockchain. In the cases of 
+create a very flexible but legally safe financial environment on the blockchain. This reduction in friction will 
+increase access to the rapidly burgeoning innovation coming from the cryptocurrency space. 
 
-#### Compliance Attestations 
+#### YES Marks: Compliance Attestation Codes
 
-A YES mark (8-bit unsigned integer) is a number which, by convention, maps to a specific compliance attestation as given 
-below. 
+A YES mark (8-bit unsigned integer) is a code which, by convention, maps to a specific compliance attestation as given 
+below. The tiers of permissions required for the outlined mechanics are also encapsulated within this structure via 
+codes 128 and 129. All codes are granted in country-specific contexts, except for the owner code 128 (which has a country
+code of 0).
 
-[*] means all country codes, [840] means US only (probably needs revising) (ISO-3166-1 country code)
+`[*]` means all country codes, `[840]` means US only (probably needs revising) (ISO-3166-1 country code)
 
     Individual: (most significant bit is 0)
-    1. financially compliant individual (country-wide/strictest) [*]
-    2. accredited investor (individual) [840]
+    1. Compliant Individual - country-wide/strictest [*]
+    2. Accredited Investor [840 or *?]
 
     Business: (most significant bit is 1)
-    129. financially compliant business (country-wide/strictest) [*] 
-    130. Money Services Business [840]
+    128. (special) Ecosystem Owner - there will only be one of these, can attest all marks except 128 [0]
+    129. (special) Ecosystem Validator - can attest all marks except 128, 129 [0]
+    
+    130. Compliant Business - country-wide/strictest [*]
+    131. Money Services Business [*] (question: should this be [840] US only or does this distinction indeed exist elsewhere)
+    132. ??? Bank [*]
+    133. ??? Public Corporation [*]
 
-***Regarding MSBs:*** todo
+Note the `[0]` on 128/129, indicating that these codes are not contextualized by country, so are only valid when the country
+code is 0.
 
-### Motivation
+### Motivations
 
-todo
+In drafting this design, our primary goal has been to materialize a direct, simple, clean implementation which solves
+the most glaring problems facing us and our partners in the space.
 
-### Rationale
+There are components of it, entirely or in part, present in many other blockchain identity protocols. The 
+landscape surrounding these efforts is evolving very quickly, and we acknowledge that the eventuality of this design
+may give way to simply punting to another protocol or ecosystem (or not).
 
-todo
+In any case, the relative simplicity of this approach enables quick iteration as we hone in on the problem areas. We
+anticipate moving quickly on changes in response to our customers' precise needs.
 
-- Many validators may co-exist in a given ecosystem. This protocol grants them collective access to a shared 
-  pool of secure identities. 
-- todo
+
 
     

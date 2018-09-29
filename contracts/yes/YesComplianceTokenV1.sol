@@ -3,7 +3,7 @@ pragma solidity ^0.4.24;
 import "../../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol";
 
 /**
- * an ERC721 "yes" compliance token supporting a collection of country-specific attributions which answer specific
+ * @notice an ERC721 "yes" compliance token supporting a collection of country-specific attributions which answer specific
  * compliance-related queries with YES. (attributions)
  *
  * primarily ERC721 is useful for the self-management of claiming addresses. a single token is more useful
@@ -32,61 +32,85 @@ import "../../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol
  */
 contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
 
-    // PARTNER INTERFACE - functionality beyond 721 for facilitating partner queries and operations
-
     /**
-     * query api: returns true if the specified address has the given country/yes attestation. this
+     * @notice query api: returns true if the specified address has the given country/yes attestation. this
      * is the primary method partners will use to query the active qualifications of any particular
      * address.
      */
-    function isYes(address _address, uint16 _countryCode, uint8 _yes) external view returns(bool) ;
+    function isYes(uint256 _validatorEntityId, address _address, uint16 _countryCode, uint8 _yes) external view returns(bool) ;
 
-    /** same as isYes except as an imperative */
-    function requireYes(address _address, uint16 _countryCode, uint8 _yes) external view ;
-
-    // function getYes(address _address, uint16 _countryCode)
-    // function getYes(uint256 _entityId, uint16 _countryCode)
-    // function getYes(uint256 _entityId)
+    /** @notice same as isYes except as an imperative */
+    function requireYes(uint256 _validatorEntityId, address _address, uint16 _countryCode, uint8 _yes) external view ;
 
     /**
-     * minting with an implied entity. the caller must have a control token. will fail if _to already belongs
-     * to a different entity.
-     *
-     * @param _control true if the new token is a control token (can mint, burn)
+     * @notice retrieve all YES marks for an address in a particular country
+     * @param _validatorEntityId the validator ID to consider. or, use 0 for any of them
+     * @param _address the validator ID to consider, or 0 for any of them
+     * @param _countryCode the ISO-3166-1 country code
      */
-    function mint(address _to, bool _control) external returns (uint256) /* permission_mint_sender() */ ;
+    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[]);
 
-    /** destroys a specific token. tokens can destroy themselves. control tokens can destroy any token (in same entity). */
+    /**
+     * @notice retrieve all YES marks grouped by country for a particular address
+     * @param _validatorEntityId the validator ID to consider. or, use 0 for any of them
+     * @param _address the validator ID to consider, or 0 for any of them
+     */
+    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[]);
+
+    /**
+     * @notice retrieve all YES marks grouped by country for a particular address
+     * @param _validatorEntityId the validator ID to consider. or, use 0 for any of them
+     * @param _address the validator ID to consider, or 0 for any of them
+     */
+    function getYes(uint256 _validatorEntityId, address _address) external view returns(mapping(uint16=>uint8[]));
+
+    /**
+     * @notice create new tokens. the caller must have a control token. will fail if _to already
+     * belongs to a different entity. minting to any entity other than the one associated with the caller
+     * is only allowed by validators.
+     * @param _control true if the new token is a control token (can mint, burn)
+     * @param _entityId the entity to mint for, supply 0 to use the entity tied to the caller
+     */
+    function mint(address _to, uint256 _entityId, bool _control) external returns (uint256);
+
+    // function mint(address _to, bool _control) external returns (uint256) /* permission_mint_sender() */ ;
+
+    /** @notice destroys a specific token. tokens can destroy themselves. control tokens can destroy any token (in same entity). */
     function burn(uint256 _tokenId) external ;
 
     // OPERATOR INTERFACE - functionality for contract operator (wyre)
 
-    /** destroys the entire entity and all tokens (should this be partner interface?) */
-    function destroyEntity(uint256 _entityId) external;
-
-    /** minting done by the contract operator for an explicit entity */
-    function mint(address _to, uint256 _entityId, bool _control) external returns (uint256);
+    /** @notice destroys the entire entity and all tokens (should this be partner interface?) */
+    function burnEntity(uint256 _entityId) external;
 
     // function mint(address _to, uint256 _entityId, bool _control, bool _final) external returns (uint256);
 
-    /** adds a specific yes to an entity */
-    function activate(uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
+    /** @notice adds a specific attestations (yes) to an entity */
+    function setAttestation(uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
 
-    /** removes a specific yes for an entity */
-    function deactivate(uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
+    /**
+     * @notice removes a attestation(s) from a specific validator for an entity
+     * @param _validatorEntityId either a specific validator entity id, or 0 for any/all
+     */
+    function clearAttestations(uint256 _validatorEntityId, uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
 
-    /** removes all YesMarks in a given country for a particular entity */
-    function deactivate(uint256 _entityId, uint16 _countryCode) external;
+    /** @notice  removes all attestations in a given country for a particular entity */
+    function clearAttestations(uint256 _entityId, uint16 _countryCode) external;
 
-    /** removes all YesMarks for a particular entity */
-    function deactivate(uint256 _entityId) external;
+    /** @notice removes all attestations for a particular entity */
+    function clearAttestations(uint256 _entityId) external;
 
-    /** assigns a lock to an entity, rendering all isYes queries false */
+    /** @notice assigns a lock to an entity, rendering all isYes queries false */
     function setLocked(uint256 _entityId, bool _lock) external;
 
-    // function isLocked(uint256 _entityId) ?
-    // function isLocked(address _address) ? partner interface?
+    /** @notice checks whether or not a particular entity is locked */
+    function isLocked(uint256 _entityId) external view returns(boolean);
 
+    /** @notice retrieve the entity ID associated with an address (or fail if there is not one) */
+    function getEntityId(address _address) external view returns(uint256);
+
+
+    // function isLocked(address _address) ? partner interface?
     // isFinalized
     // finalize()
 
