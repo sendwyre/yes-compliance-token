@@ -4,11 +4,11 @@ import "../../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol
 
 /**
  * @notice an ERC721 "yes" compliance token supporting a collection of country-specific attributions which answer specific
- * compliance-related queries with YES. (attributions)
+ * compliance-related queries with YES. (attestations)
  *
  * primarily ERC721 is useful for the self-management of claiming addresses. a single token is more useful
  * than a non-ERC721 interface because of interop with other 721-supporting systems/ui; it allows users to
- * manage their financial stamp with flexibility, using a well-established simple concept of non-fungible tokens.
+ * manage their financial stamp with flexibility using a well-established simple concept of non-fungible tokens.
  * this interface is for anyone needing to carry around and otherwise manage their proof of compliance.
  *
  * the financial systems these users authenticate against have a different set of API requirements. they need
@@ -28,14 +28,17 @@ import "../../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol
  *  - a lock on the entity is used instead of token revocation to remove the cash burden assumed by a customer to
  *    redistribute a fleet of coins
  *  - all country codes should be via ISO-3166-1
- *  - code 128 is special purpose for the contract owner - permission to create new validators, or do anything
- *  - code 129 is special purpose for all validators - permission to mint/burn for any entity (non-validator/owner)
  */
 contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
 
     uint256 public constant OWNER_ENTITY_ID = 1;
+
     uint8 public constant YESMARK_OWNER = 128;
     uint8 public constant YESMARK_VALIDATOR = 129;
+
+    /*
+     todo events: entity updated, destroyed, ????
+     */
 
     /**
      * @notice query api: returns true if the specified address has the given country/yes attestation. this
@@ -54,15 +57,7 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
      * @param _countryCode the ISO-3166-1 country code
      * @return (non-duplicate) array of YES marks present
      */
-    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[]);
-
-    /**
-     * @notice retrieve all YES marks grouped by country for a particular address
-     * @param _validatorEntityId the validator ID to consider. or, use 0 for any of them
-     * @param _address the validator ID to consider, or 0 for any of them
-     * @return (non-duplicate) array of YES marks present
-     */
-    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[]);
+    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[] memory);
 
     /**
      * @notice retrieve all YES marks grouped by country for a particular address
@@ -70,7 +65,7 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
      * @param _address the validator ID to consider, or 0 for any of them
      * @return mapping from country code to array of YES marks present
      */
-    function getYes(uint256 _validatorEntityId, address _address) external view returns(mapping(uint16=>uint8[]));
+    function getYes(uint256 _validatorEntityId, address _address) external view returns(mapping(uint16=>uint8[]) memory);
 
     /**
      * @notice create new tokens. the caller must have a control token. will fail if _to already
@@ -82,6 +77,9 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
      */
     function mint(address _to, uint256 _entityId, bool _control) external returns (uint256);
 
+    /** @notice shortcut to mint() + setYes() in one call, for a single country */
+    function mint(address _to, uint256 _entityId, bool _control, uint16 _countryCode, uint8[] _yes) external returns (uint256);
+
     /** @notice destroys a specific token */
     function burn(uint256 _tokenId) external;
 
@@ -89,25 +87,25 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
     function burnEntity(uint256 _entityId) external;
 
     /** @notice adds a specific attestations (yes) to an entity */
-    function setAttestation(uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
+    function setYes(uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
 
     /**
      * @notice removes a attestation(s) from a specific validator for an entity
      * @param _validatorEntityId either a specific validator entity id, or 0 for any/all
      */
-    function clearAttestations(uint256 _validatorEntityId, uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
+    function clearYes(uint256 _validatorEntityId, uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
 
     /** @notice removes all attestations in a given country for a particular entity */
-    function clearAttestations(uint256 _entityId, uint16 _countryCode) external;
+    function clearYes(uint256 _entityId, uint16 _countryCode) external;
 
     /** @notice removes all attestations for a particular entity */
-    function clearAttestations(uint256 _entityId) external;
+    function clearYes(uint256 _entityId) external;
 
     /** @notice assigns a lock to an entity, rendering all isYes queries false */
     function setLocked(uint256 _entityId, bool _lock) external;
 
     /** @notice checks whether or not a particular entity is locked */
-    function isLocked(uint256 _entityId) external view returns(boolean);
+    function isLocked(uint256 _entityId) external view returns(bool);
 
     /** @notice returns true if the specified token has been finalized (cannot be moved) */
     function isFinalized(uint256 _tokenId) external view returns(bool);
