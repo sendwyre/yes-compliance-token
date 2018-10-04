@@ -51,7 +51,7 @@ entity - business or individual - which has met specific compliance requirements
 
 There are two high-level token types: standard and control. Both tokens are generally identical in 
 functionality (and appearance!), except that control tokens grant their holder additional permissions. This distinction
-is made solely for security. They permit their holders the ability to mint new tokens as well as burn 
+is made solely for security. Control tokens permit their holders the ability to mint new tokens as well as burn 
 existing ones. Standard tokens are used solely for identification; they provide no minting powers, though do allow 
 self-destruction/self-burn.
 
@@ -141,14 +141,19 @@ code is 0.
 ### Motivations
 
 In drafting this design, our primary goal has been to materialize a direct, simple, clean implementation which solves
-the most glaring problems facing us and our partners in the space.
+the most glaring problems facing us and our partners in the space. We need a way to attach simple attestations
+that had predefined definitions in the context of compliance, per-country.
 
-There are components of it, entirely or in part, present in many other blockchain identity protocols. The 
-landscape surrounding these efforts is evolving very quickly, and we acknowledge that the eventuality of this design
-may give way to simply punting to another protocol or ecosystem (or not).
+There are components of it, entirely or in part, present in many other blockchain identity and/or compliance protocols. 
+The landscape surrounding these efforts is evolving very quickly, and we acknowledge that the eventuality of this design
+may give way to simply punting to another protocol or ecosystem (or not). If there are other existing 
+protocols which meet the functionality (both technically and mechanically) of this protocol with nearly-equal simplicity 
+that are either more well-thought or more well-adopted to a significant degree, please feel free to shit on this one.
 
 In any case, the relative simplicity of this approach enables quick iteration as we hone in on the problem areas. We
 anticipate moving quickly on changes in response to our customers' precise needs.
+
+
 
 
 

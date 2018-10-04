@@ -14,8 +14,8 @@ https://github.com/trufflesuite/truffle-contract/blob/web3-one-readme/README.md
 contract('WyreYesComplianceToken', function ([owner, ALICE_ADDR1, BOB_ADDR1, ALICE_ADDR2, NONHOLDER_ACCOUNT1]) {
     let contract;
 
-    let ENTITY_ALICE = 1;
-    let ENTITY_BOB = 2;
+    let ENTITY_ALICE = 10000;
+    let ENTITY_BOB =   10001;
 
     let USA_CODE = 840;
     let INDIVIDUAL_FULL_COMPLIANCE = 1;
@@ -30,11 +30,11 @@ contract('WyreYesComplianceToken', function ([owner, ALICE_ADDR1, BOB_ADDR1, ALI
 
     it("should pass YES query for non-control token holder", async function () {
         // give the alice entity approved compliance
-        await contract.activate(ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        await contract.setYes(ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
         // issue token for alice
         await contract.methods['mint(address,uint256,bool)'](ALICE_ADDR1, ENTITY_ALICE, false, {from: owner});
         // query alice
-        let queryResult = await contract.isYes.call(ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        let queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
         assert.equal(queryResult, true);
     });
 

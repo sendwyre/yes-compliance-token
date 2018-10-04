@@ -28,8 +28,10 @@ import "../../submodules/openzeppelin-zos/contracts/token/ERC721/ERC721Token.sol
  *  - a lock on the entity is used instead of token revocation to remove the cash burden assumed by a customer to
  *    redistribute a fleet of coins
  *  - all country codes should be via ISO-3166-1
+ *
+ * any (non-view) methods not explicitly marked idempotent are not idempotent.
  */
-contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
+contract YesComplianceTokenV1 is ERC721Token /*, ERC165 :should: */ {
 
     uint256 public constant OWNER_ENTITY_ID = 1;
 
@@ -57,15 +59,9 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
      * @param _countryCode the ISO-3166-1 country code
      * @return (non-duplicate) array of YES marks present
      */
-    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[] memory);
+    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[] /* memory */);
 
-    /**
-     * @notice retrieve all YES marks grouped by country for a particular address
-     * @param _validatorEntityId the validator ID to consider. or, use 0 for any of them
-     * @param _address the validator ID to consider, or 0 for any of them
-     * @return mapping from country code to array of YES marks present
-     */
-    function getYes(uint256 _validatorEntityId, address _address) external view returns(mapping(uint16=>uint8[]) memory);
+    // function getCountries(uint256 _validatorEntityId, address _address) external view returns(uint16[]  /* memory */);
 
     /**
      * @notice create new tokens. the caller must have a control token. will fail if _to already
@@ -86,22 +82,24 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
     /** @notice destroys the entire entity and all tokens */
     function burnEntity(uint256 _entityId) external;
 
-    /** @notice adds a specific attestations (yes) to an entity */
+    /**
+     * @notice adds a specific attestations (yes) to an entity. idempotent: will return normally even if the mark
+     * was already set by this validator
+     */
     function setYes(uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
 
     /**
-     * @notice removes a attestation(s) from a specific validator for an entity
-     * @param _validatorEntityId either a specific validator entity id, or 0 for any/all
+     * @notice removes a attestation(s) from a specific validator for an entity. idempotent
      */
-    function clearYes(uint256 _validatorEntityId, uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
+    function clearYes(uint256 _entityId, uint16 _countryCode, uint8 _yes) external;
 
-    /** @notice removes all attestations in a given country for a particular entity */
+    /** @notice removes all attestations in a given country for a particular entity. idempotent */
     function clearYes(uint256 _entityId, uint16 _countryCode) external;
 
-    /** @notice removes all attestations for a particular entity */
+    /** @notice removes all attestations for a particular entity. idempotent */
     function clearYes(uint256 _entityId) external;
 
-    /** @notice assigns a lock to an entity, rendering all isYes queries false */
+    /** @notice assigns a lock to an entity, rendering all isYes queries false. idempotent */
     function setLocked(uint256 _entityId, bool _lock) external;
 
     /** @notice checks whether or not a particular entity is locked */
@@ -110,7 +108,7 @@ contract YesComplianceTokenV1 is ERC721Token/*, ERC165 */ {
     /** @notice returns true if the specified token has been finalized (cannot be moved) */
     function isFinalized(uint256 _tokenId) external view returns(bool);
 
-    /** @notice finalizes a token by ID preventing it from getting moved */
+    /** @notice finalizes a token by ID preventing it from getting moved. idempotent */
     function finalize(uint256 _tokenId) external;
 
     /** @return the entity ID associated with an address (or fail if there is not one) */
