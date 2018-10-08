@@ -109,8 +109,19 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
 
     constructor(string _name, string _symbol) public {
         // the constructor is only used when deploying the contract outside the context of Upgradeable
+        super.initialize(_name, _symbol);
         _upgradeable_initialize();
-        initialize(_name, _symbol);
+        // initialize(_name, _symbol);
+    }
+
+    /**
+     * executed in lieu of a constructor in a delegated context
+     */
+    function _upgradeable_initialize() public {
+        super._upgradeable_initialize(); // provides permission/gating
+
+        // some things are still tied to the owner (instead of the yesmark_owner :notsureif:)
+        ownerAddress = msg.sender;
 
         // grant the owner token
         mint_I(msg.sender, OWNER_ENTITY_ID, true);
@@ -118,14 +129,6 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
         // ecosystem owner gets both owner and validator marks (self-attested)
         setYes_I(OWNER_ENTITY_ID, OWNER_ENTITY_ID, 0, YESMARK_OWNER);
         setYes_I(OWNER_ENTITY_ID, OWNER_ENTITY_ID, 0, YESMARK_VALIDATOR);
-    }
-
-    /**
-     * executed in lieu of a constructor in a delegated context
-     */
-    function _upgradeable_initialize() public {
-        super._upgradeable_initialize();
-        ownerAddress = msg.sender;
     }
 
     /**
@@ -157,7 +160,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
         uint256 callerEntityId = entityIdByTokenId[callerTokenId];
 
         // make sure caller has a control token, at the least
-        require(tokenRecordById[callerTokenId].control);
+        require(tokenRecordById[callerTokenId].control, 'control token required');
 
         // determine/validate the entity being minted for
         uint256 realEntityId;
@@ -167,7 +170,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
 
         } else {
             // otherwise make sure caller is a VALIDATOR, else fail
-            require(senderIsControlValidator()); // some duplicate checks/lookups, gas leak
+            require(senderIsControlValidator(), 'illegal entity id'); // some duplicate checks/lookups, gas leak
             realEntityId = _entityId;
         }
 
@@ -181,7 +184,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
         uint256 callerEntityId = entityIdByTokenId[callerTokenId];
 
         // make sure caller has a control token, at the least
-        require(tokenRecordById[callerTokenId].control);
+        require(tokenRecordById[callerTokenId].control, 'control token required');
 
         // determine/validate the entity being minted for
         uint256 realEntityId;
@@ -264,7 +267,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
 
         // special check against 129 validator mark
         if(_yes == 129)
-            require(senderIsEcosystemControl()); // this is duplicating some things, gas leak
+            require(senderIsEcosystemControl(), 'not authorized as ecosystem control (129)'); // this is duplicating some things, gas leak
 
         EntityRecord storage e = entity(_entityId);
 
@@ -429,7 +432,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
     /** non-permissed internal minting impl */
     function mint_I(address _to, uint256 _entityId, bool _control) internal returns (uint256) {
         EntityRecord storage e = entity(_entityId);
-        require(e.tokenIds.length < MAX_TOKENS_PER_ENTITY);
+        require(e.tokenIds.length < MAX_TOKENS_PER_ENTITY, 'token limit reached');
         require(e.tokenIdCounter < 2**64-1); // kind of ridiculous but whatever, safety first!
         uint256 tokenId = uint256(keccak256(abi.encodePacked(_entityId, e.tokenIdCounter++)));
         super._mint(_to, tokenId);
@@ -460,7 +463,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
         // NOTE: this breaks hotwallet integrations, at this point necessarily so
         if(balanceOf(_to) > 0) {
             uint256 prevEntityId = entityIdByTokenId[tokenOfOwnerByIndex(_to, 0)];
-            require(prevEntityId == entityId);
+            require(prevEntityId == entityId, 'conflicting entities');
         }
 
         super.addTokenTo(_to, _tokenId);
@@ -521,12 +524,12 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
     // PERMISSIONS MODIFIERS ----------------------------------------------------------------
 
     modifier permission_validator {
-        require(senderIsControlValidator());
+        require(senderIsControlValidator(), 'not authorized as validator');
         _;
     }
 
     modifier permission_super {
-        require(senderIsEcosystemControl());
+        require(senderIsEcosystemControl(), 'not authorized as ecosystem control');
         _;
     }
 
@@ -536,7 +539,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
 //    }
 
     modifier permission_control_entityId(uint256 _entityId) {
-        require(senderIsEcosystemControl() || senderIsControl_ByEntityId(_entityId));
+        require(senderIsEcosystemControl() || senderIsControl_ByEntityId(_entityId), 'not authorized entity controller');
         _;
     }
 
@@ -546,7 +549,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
 //    }
 
     modifier permission_control_tokenId(uint256 _tokenId) {
-        require(senderIsEcosystemControl() || senderIsControl_ByTokenId(_tokenId));
+        require(senderIsEcosystemControl() || senderIsControl_ByTokenId(_tokenId), 'not authorized token controller');
         _;
     }
 

@@ -1,5 +1,8 @@
 pragma solidity ^0.4.24;
 
+/**
+ * base contract for proxying dispatcher approach to upgradeability
+ */
 contract Upgradeable {
     /** security */
     address internal _upgradeable_delegate_owner;
@@ -31,13 +34,13 @@ contract Upgradeable {
  */
 contract Dispatcher is Upgradeable {
 
-    constructor(address target) public {
+    constructor(address target) public Upgradeable() {
         _upgradeable_assign_delegate(target);
     }
 
     function _upgradeable_initialize() public {
         // shouldn't happen on the dispatcher
-        revert();
+        // revert();
     }
 
 //    event Upgraded(address indexed implementation);

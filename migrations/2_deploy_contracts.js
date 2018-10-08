@@ -17,12 +17,13 @@ var Dispatcher = artifacts.require("Dispatcher");
 
 module.exports = function(deployer) {
     return deployer.deploy(YesComplianceTokenV1Impl, "WRONG", "Unused token").then(function(r1) {
-        console.log("Code-only YesComplianceTokenImplV1 deployed at ", r1.address, ", initializing dispatcher proxy/storage...");
+        console.log("Code-only YesComplianceTokenImpl deployed at ", r1.address, ", initializing dispatcher+storage...");
 
         // that deployment is just for its code, not data.
 
         return deployer.deploy(Dispatcher, r1.address).then(function(r2) {
             console.log("Dispatcher proxy deployed at: ", r2.address);
+            console.log("ZZ: ", YesComplianceTokenV1Impl.at(r2.address));
 
             let r2_yes = YesComplianceTokenV1.at(r2.address);
 
