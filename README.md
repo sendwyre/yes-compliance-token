@@ -8,7 +8,6 @@ See ![YESToken](YESToken.md) for the specification this is implementing.
 1. Install Truffle and darq-truffle as global dev deps:
 
  
-       $ npm i -D -g darq-truffle@next
        $ npm i -D -g truffle
         
     
@@ -20,6 +19,6 @@ See ![YESToken](YESToken.md) for the specification this is implementing.
 
 ### Run Tests
 
-    $ darq-truffle test 
+    $ truffle test 
     
     

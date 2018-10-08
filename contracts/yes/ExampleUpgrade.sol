@@ -11,7 +11,7 @@ contract YesComplianceTokenV2ExampleImpl is YesComplianceTokenV1Impl, YesComplia
 
     string testBullshit;
 
-    constructor(string _name, string _symbol) public YesComplianceTokenV1Impl(_name, _symbol) {}
+    constructor() public {}
 
     function _upgradeable_initialize() public {
         super._upgradeable_initialize();

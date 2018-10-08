@@ -28,15 +28,17 @@ verifications for end-users; ultimately, the ecosystem owner (Wyre) backs the at
 The specific attestations allowed are defined authoritatively by this document and may be country-specific.
 
 When an end-user attempts to interact with some 3rd-party financial service or application which supports this protocol 
-(an _integrator_), the application can quickly query the compliance status of the end-user on the blockchain. Beyond 
-the ERC721 interface, a set of query APIs are defined so that the partner can contextualize their needs and 
-acquire a direct authoritative answer on the compliance status of a particular address. All defined attestations
-are boolean; they may be present or not, without degree.
+(an _integrator_), the application can quickly query the compliance status of the end-user on the blockchain. A  
+simple query API is defined so that the partner may contextualize their needs and 
+acquire a direct answer on the compliance status of a particular address.
 
-One deployed contract of this token encompasses a single ecosystem of recognized minters in the space. This
-ensures that any partner attempting to query compliance status need not ask many minters separately, but rather
-query them all through a single token. The _ecosystem owner_ (original owner of the contract - Wyre, in our case) 
+One deployed contract of this token encompasses a single ecosystem of recognized validators in the space. This
+ensures that any partner attempting to query compliance status need not ask many validators separately, but rather
+query them all through a single token. The _ecosystem owner_ (Wyre, in our case) 
 ultimately controls the list of authorized validators.
+
+Any collective of validators launches their own ecosystem as a new standalone token. Interconnectedness of
+such ecosystems might be supported via proxying (see below).
 
 ### Specification
 
@@ -46,18 +48,18 @@ See the YES interface definition [here](contracts/yes/YesComplianceTokenV1.sol).
 
 The YES system distinguishes between _tokens_ and _entities_. An entity is a business or individual which maintains
 some verified compliance status. An entity may have many tokens. One token will always have a single entity. All
-token are linked to an identified entity and can be used as proof-of-compliance. They represent a formally identified 
-entity - business or individual - which has met specific compliance requirements, as attested to by one or more validators. 
+tokens are linked to an identified entity and can be used interchangeably as proof-of-compliance. This proof references
+a formally identified 
+entity - business or individual - which has met specific compliance requirements, as attested to by one or more validators.
 
-There are two high-level token types: standard and control. Both tokens are generally identical in 
-functionality (and appearance!), except that control tokens grant their holder additional permissions. This distinction
-is made solely for security. Control tokens permit their holders the ability to mint new tokens as well as burn 
-existing ones. Standard tokens are used solely for identification; they provide no minting powers, though do allow 
-self-destruction/self-burn.
+A validator will interact with the end-user in order to validate them - request documentation, etc. After this process
+is complete, the validator will assign the corresponding on-chain YES attestation marks. These marks attest to the outcome 
+of specific predefined degrees of compliance, and are assigned to their entity. They are always boolean; present, or not,
+without degree.
 
-Typically, a validator would mint and send one new control to a user once their compliance status is passing. Because 
-it's a control token, the user would be free to create more of them (control or standard) and distribute them to any
-other addresses they would like to identify with (using the increasingly well-known ERC721).
+The validator may mint and send a new token to the end-user, which is linked to the entity that has their YES 
+attestation marks. Once they possess a token, they're then free to create more tokens 
+and distribute them to any other addresses they would like to identify with (via the increasingly well-known ERC721).
 
 ***Validators*** are entities with the `129. Ecosystem Validator` YES mark. They are the parties who are
 interacting with the end-user to process their proof of identity, and they have reporting (and liability?)
@@ -79,12 +81,17 @@ the overall validity of the identity into question - as in the case of possible 
 the happy case where the alert is cleared, we save a lot of fees and token-holder effort by flipping one bit instead
 of needing to re-issue possibly many coins to many addresses. 
 
-***Finalization:*** Permissible to any token holder, this will prevent the token from ever being moved. It could only
+***Limited tokens:*** For security, we also provide a _limited_ token. This is a token which cannot be used to mint others. In most
+cases, a token permits its holder to mint new tokens; a limited token cannot. This
+is useful as a division of privilege to more strongly safeguard the production new tokens. Systems which do not support
+such a distinction can simply ignore limited tokens.
+
+***Token finalization:*** Permissible to any token holder, this will prevent the token from ever being moved. It could only
 get burned. In systems which have no use to move the tokens around once they reach their target, this adds a small 
 degree of safety for tokens to be erroneously (or maliciously) moved.
 
 ***Proxying:*** _TODO/Future/Maybe_: Token 'proxying' to enable the ecosystem owner to delegate token recognition to 
-a specific whitelist of other YES-compatible tokens so that other top-level minters could maintain their own networks 
+a specific whitelist of other YES-compatible tokens so that other top-level validators could maintain their own networks 
 of partners, yet remain queryable through a single token interface.
 
 #### Regulatory Mechanics
@@ -95,12 +102,17 @@ ecosystem owner. In the case of applications which manage user-controlled funds,
 as they do not custodialize their customers' funds. Therefore, they are not required to maintain these licenses. 
 
 However, this passes the buck of remaining compliant to the end-user. If someone wants to trade money with a friend, with an 
-exchange, with a business, anywhere - they want to know they are fully and properly handing over the liability of 
-what happens with those funds. They can only do this if there is a chain of liable, well-identified parties. They needn't
-know or maintain any personal details of the end-user; only a legal guarantee from a liable party. All ongoing reporting
-and fraud prevention
-is the responsibility of the liable party (Wyre), which may have delegated it further (through agreements) with other
-parties (validators). 
+exchange, with a business, anywhere - they want to know they are properly handing over the liability of 
+what happens with those funds. This ensures there are proper channels for legal recourse when required. 
+
+This proof is provided as a chain of liable, well-identified parties. However, privacy should be maintained as best 
+as possible. I should not need to know the details of the person with whom I'm interacting; merely, I should have 
+trustworthy evidence that they are capable of bearing responsibility for their actions. This comes as a guarantee
+from a liable party, the ecosystem owner. 
+ 
+All ongoing reporting and fraud prevention is then the responsibility of the ecosystem owner, which may have 
+delegated it further (through agreements) with other parties (validators). An integrator needn't treat
+tokens differently which have been validated by differing parties (unless they want to). 
 
 In the cases of businesses which custodialize their customers' funds, they must (at the least, in the US) be licensed 
 money service businesses. They must follow all relevant reporting requirements as dictated by their business practices
@@ -144,17 +156,17 @@ In drafting this design, our primary goal has been to materialize a direct, simp
 the most glaring problems facing us and our partners in the space. We need a way to attach simple attestations
 that had predefined definitions in the context of compliance, per-country.
 
-There are components of it, entirely or in part, present in many other blockchain identity and/or compliance protocols. 
-The landscape surrounding these efforts is evolving very quickly, and we acknowledge that the eventuality of this design
-may give way to simply punting to another protocol or ecosystem (or not). If there are other existing 
-protocols which meet the functionality (both technically and mechanically) of this protocol with nearly-equal simplicity 
-that are either more well-thought or more well-adopted to a significant degree, please feel free to shit on this one.
+todo privacy
 
-In any case, the relative simplicity of this approach enables quick iteration as we hone in on the problem areas. We
-anticipate moving quickly on changes in response to our customers' precise needs.
+### Rationale
 
+todo
 
-
+- 721 - ease/standardization/wallet integrations
+- outcome-signatures instead of collections of proof items
+- limited/finalization for security
+- single-token-many-verifier
+- 
 
 
     

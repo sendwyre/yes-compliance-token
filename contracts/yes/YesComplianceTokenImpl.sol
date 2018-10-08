@@ -90,10 +90,13 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
         /** position of the tokenId in EntityRecord.tokenIds */
         uint32 tokenIdIdx;
 
-        /** true if this token has administrative superpowers */
+        /** true if this token has administrative superpowers (aka is _not_ limited) */
         bool control;
 
-        // 31 bits more in this slot
+        /** true if this token cannot move */
+        bool finalized;
+
+        // 30 bits more in this slot
 
         // limitations: in/out?
     }
@@ -107,24 +110,20 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
     /** for entity enumeration. maximum of 2^256-1 total entities (i think we'll be ok) */
     uint256[] entityIds;
 
-    constructor(string _name, string _symbol) public {
-        // the constructor is only used when deploying the contract outside the context of Upgradeable
-        super.initialize(_name, _symbol);
-        _upgradeable_initialize();
-        // initialize(_name, _symbol);
+    constructor() public {
+        /* this space intentionally left blank */
     }
 
     /**
-     * executed in lieu of a constructor in a delegated context
+     * constructor alternative: first-time initialization the contract/token (required because of upgradeability)
      */
-    function _upgradeable_initialize() public {
-        super._upgradeable_initialize(); // provides permission/gating
-
-        // some things are still tied to the owner (instead of the yesmark_owner :notsureif:)
-        ownerAddress = msg.sender;
+    function initialize(string _name, string _symbol) {
+        // require(super._symbol.length == 0 || _symbol == super._symbol); // cannot change symbol after first init bc that could fuck shit up
+        _upgradeable_initialize(); // basically for security
+        super.initialize(_name, _symbol); // init token info
 
         // grant the owner token
-        mint_I(msg.sender, OWNER_ENTITY_ID, true);
+        mint_I(ownerAddress, OWNER_ENTITY_ID, true);
 
         // ecosystem owner gets both owner and validator marks (self-attested)
         setYes_I(OWNER_ENTITY_ID, OWNER_ENTITY_ID, 0, YESMARK_OWNER);
@@ -132,11 +131,13 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
     }
 
     /**
-     * first-time initialization the contract/token. required because of upgradeability!
+     * executed in lieu of a constructor in a delegated context
      */
-    function initialize(string _name, string _symbol) public permission_super {
-        // require(super._symbol.length == 0 || _symbol == super._symbol); // cannot change symbol after first init bc that could fuck shit up
-        super.initialize(_name, _symbol);
+    function _upgradeable_initialize() public {
+        super._upgradeable_initialize(); // provides require(msg.sender == _upgradeable_delegate_owner);
+
+        // some things are still tied to the owner (instead of the yesmark_owner :notsureif:)
+        ownerAddress = msg.sender;
     }
 
     // YesComplianceTokenV1 Interface Methods --------------------------------------------------------------------------
@@ -347,13 +348,12 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
     }
 
     function isFinalized(uint256 _tokenId) external view returns (bool) {
-        // todo implement meeee
-        return false;
+        return tokenRecordById[_tokenId].finalized;
     }
 
-    function finalize(uint256 _tokenId) external {
-        // todo implement meeee
-        require(false);
+    function finalize(uint256 _tokenId) external permission_access_tokenId(_tokenId) {
+        TokenRecord storage t = tokenRecordById[_tokenId];
+        t.finalized = true;
     }
 
     // Internal Methods ------------------------------------------------------------------------------------------------
@@ -375,7 +375,23 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
 
         uint256 entityId = entityIdByTokenId[tokenOfOwnerByIndex(_address, 0)];
         EntityRecord storage e = entityRecordById[entityId];
-        return (!e.locked && e.yesMarkByKey[yesKey(_countryCode, _yes)].yes > 0);
+
+        // locked always bails
+        if(e.locked)
+            return false;
+
+        // gate out definite nos
+        YesMark storage m = e.yesMarkByKey[yesKey(_countryCode, _yes)];
+        if(m.yes == 0)
+            return false;
+
+        // no specific validators, we good
+        if(_validatorEntityId == 0)
+            return true;
+
+        // filter by validator
+        return m.validatorEntityIdIdx[_validatorEntityId] > 0
+            || m.validatorEntityIds.length > 0 && m.validatorEntityIds[0] == _validatorEntityId;
     }
 
     function setYes_I(uint256 _entityId, uint16 _countryCode, uint8 _yes) internal {
@@ -466,6 +482,8 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
             require(prevEntityId == entityId, 'conflicting entities');
         }
 
+        require(!tokenRecordById[_tokenId].finalized, 'token is finalized');
+
         super.addTokenTo(_to, _tokenId);
     }
 
@@ -534,7 +552,7 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
     }
 
 //    modifier permission_access_entityId(uint256 _entityId) {
-//        require(senderIsEcosystemOwner() || senderIsEntity_ByEntityId(_entityId));
+//        require(senderIsEcosystemControl() || senderIsEntity_ByEntityId(_entityId));
 //        _;
 //    }
 
@@ -543,10 +561,10 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
         _;
     }
 
-//    modifier permission_access_tokenId(uint256 _tokenId) {
-//        require(senderIsEcosystemOwner() || senderIsEntity_ByTokenId(_tokenId));
-//        _;
-//    }
+    modifier permission_access_tokenId(uint256 _tokenId) {
+        require(senderIsEcosystemControl() || senderIsEntity_ByTokenId(_tokenId));
+        _;
+    }
 
     modifier permission_control_tokenId(uint256 _tokenId) {
         require(senderIsEcosystemControl() || senderIsControl_ByTokenId(_tokenId), 'not authorized token controller');

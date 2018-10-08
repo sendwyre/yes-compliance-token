@@ -1,32 +1,119 @@
 let YesComplianceTokenV1Impl = artifacts.require("YesComplianceTokenV1Impl");
 
-/*
-NOTE:
-at time of writing this, 2018-09-18, darq-truffle is required for access to the web3 1.0
-interfaces, specifically bc of bugs regarding method overloading disambiguation
-
-https://github.com/trufflesuite/truffle-contract/blob/web3-one-readme/README.md
--> Overloaded Solidity methods (credit to @rudolfix and @mcdee / PRs #75 and #94)
-
-
-  */
-
-contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, ALICE_ADDR2, NONHOLDER_ACCOUNT1]) {
+contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, ALICE_ADDR2, NONHOLDER_ACCOUNT1, VERIFIER_A_ADDR1, VERIFIER_B_ADDR1]) {
     let contract;
 
     let ENTITY_ALICE = 10000;
     let ENTITY_BOB =   10001;
 
+    let ENTITY_VERIFIER_A = 10002;
+    let ENTITY_VERIFIER_B = 10003;
+
     let USA_CODE = 840;
     let INDIVIDUAL_FULL_COMPLIANCE = 1;
+    let ACCREDITED_INVESTOR = 1;
+    let ECOSYSTEM_VALIDATOR = 129;
 
     beforeEach('setup contract for each test', async function () {
-        contract = await YesComplianceTokenV1Impl.new('WYRE-YES-TEST', 'YESTEST', { from: owner });
-        // console.log("contract: ", contract);
+        contract = await YesComplianceTokenV1Impl.new({ from: owner });
+        await contract.initialize('WYRE-YES-TEST', 'YESTEST');
     });
 
     it('has an owner', async function () {
         assert.equal(await contract.ownerAddress(), owner);
+    });
+
+    it("should allow minter delegation and querying", async function () {
+        // create validator
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](VERIFIER_A_ADDR1, ENTITY_VERIFIER_A, true, 0, [ECOSYSTEM_VALIDATOR], {from: owner, gas: 1000000});
+
+        let queryResult = await contract.isYes.call(0, VERIFIER_A_ADDR1, 0, ECOSYSTEM_VALIDATOR);
+        assert.equal(queryResult, true);
+
+        // issue token for alice from verifier
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](ALICE_ADDR1, ENTITY_ALICE, true, USA_CODE, [INDIVIDUAL_FULL_COMPLIANCE], {from: VERIFIER_A_ADDR1, gas: 1000000});
+
+        // query validations
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+
+        queryResult = await contract.isYes.call(ENTITY_VERIFIER_A, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+
+        queryResult = await contract.isYes.call(ENTITY_BOB, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, false);
+    });
+
+    it("should allow yes specific clearing", async function () {
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](VERIFIER_A_ADDR1, ENTITY_VERIFIER_A, true, 0, [ECOSYSTEM_VALIDATOR], {from: owner, gas: 1000000});
+
+        let queryResult = await contract.isYes.call(0, VERIFIER_A_ADDR1, 0, ECOSYSTEM_VALIDATOR);
+        assert.equal(queryResult, true);
+
+        // issue token for alice from verifier
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](ALICE_ADDR1, ENTITY_ALICE, true, USA_CODE, [INDIVIDUAL_FULL_COMPLIANCE], {from: VERIFIER_A_ADDR1, gas: 1000000});
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+
+        // clear wrong one
+        await contract.contract.clearYes['uint256,uint16,uint8'](ENTITY_ALICE, USA_CODE+1, INDIVIDUAL_FULL_COMPLIANCE, {from: VERIFIER_A_ADDR1});
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+
+        // clear wrong one
+        await contract.contract.clearYes['uint256,uint16,uint8'](ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE+1, {from: VERIFIER_A_ADDR1});
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+
+        // clear right one
+        await contract.contract.clearYes['uint256,uint16,uint8'](ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE, {from: VERIFIER_A_ADDR1});
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, false);
+    });
+
+    it("should allow yes country-wide clearing", async function () {
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](VERIFIER_A_ADDR1, ENTITY_VERIFIER_A, true, 0, [ECOSYSTEM_VALIDATOR], {from: owner, gas: 1000000});
+
+        let queryResult = await contract.isYes.call(0, VERIFIER_A_ADDR1, 0, ECOSYSTEM_VALIDATOR);
+        assert.equal(queryResult, true);
+
+        // issue token for alice from verifier
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](ALICE_ADDR1, ENTITY_ALICE, true, USA_CODE, [INDIVIDUAL_FULL_COMPLIANCE], {from: VERIFIER_A_ADDR1, gas: 1000000});
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+
+        // clear wrong one
+        await contract.contract.clearYes['uint256,uint16'](ENTITY_ALICE, USA_CODE+1, {from: VERIFIER_A_ADDR1});
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+
+        // clear right one
+        await contract.contract.clearYes['uint256,uint16'](ENTITY_ALICE, USA_CODE, {from: VERIFIER_A_ADDR1});
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, false);
+    });
+
+    it("should have functioning finalization", async function () {
+        // setup/mint for alice
+        await contract.setYes(ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+
+        let token1 = await contract.mint.call(ALICE_ADDR1, ENTITY_ALICE, true, {from: owner});
+        await contract.mint(ALICE_ADDR1, ENTITY_ALICE, true, {from: owner});
+
+        assert(await contract.isFinalized.call(token1) === false);
+
+        // alice finalizes her own token
+        await contract.finalize(token1, {from: ALICE_ADDR1});
+
+        assert(await contract.isFinalized.call(token1) === true);
+
+        // then she tries to move it
+        try {
+            await contract.transferFrom(ALICE_ADDR1, ALICE_ADDR2, token1, {from: ALICE_ADDR1});
+            assert.fail();
+        } catch (e) {
+            assert(e.toString().includes('revert'));
+        }
     });
 
     it("should pass YES query for non-control token holder", async function () {
@@ -60,7 +147,7 @@ contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, A
         assert.equal(queryResult, true);
     });
 
-    it("should allow control token holder to mint new control tokens (explicit entity)", async function () {
+    it("should allow control token holder to mint new control tokens", async function () {
         // give the alice entity approved compliance
         await contract.setYes(ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
         // issue control token for alice
@@ -72,31 +159,7 @@ contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, A
         assert.equal(queryResult, true);
     });
 
-    // it("should allow control token holder to mint new control tokens (implicit entity)", async function () {
-    //     // give the alice entity approved compliance
-    //     await contract.setYes(ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
-    //     // issue control token for alice
-    //     await contract.mint(ALICE_ADDR1, ENTITY_ALICE, true, {from: owner});
-    //     // have alice issue control token to other address
-    //     await contract.mint(ALICE_ADDR2, ENTITY_ALICE, true, {from: ALICE_ADDR1});
-    //     // query alice addr 2
-    //     let queryResult = await contract.isYes.call(0, ALICE_ADDR2, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
-    //     assert.equal(queryResult, true);
-    // });
-    //
-    // it("should allow control token holder to mint new non-control tokens (implicit entity)", async function () {
-    //     // give the alice entity approved compliance
-    //     await contract.setYes(ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
-    //     // issue control token for alice
-    //     await contract.mint(ALICE_ADDR1, ENTITY_ALICE, true, {from: owner});
-    //     // have alice issue control token to other address
-    //     await contract.mint(ALICE_ADDR2, false, {from: ALICE_ADDR1});
-    //     // query alice addr 2
-    //     let queryResult = await contract.isYes.call(0, ALICE_ADDR2, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
-    //     assert.equal(queryResult, true);
-    // });
-
-    it("should not allow non-control token holder to mint new tokens (explicit entity)", async function () {
+    it("should not allow non-control token holder to mint new tokens", async function () {
         // give the alice entity approved compliance
         await contract.setYes(ENTITY_ALICE, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
         // issue non control token for alice
@@ -106,6 +169,7 @@ contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, A
             await contract.mint(ALICE_ADDR2, ENTITY_ALICE, false, {from: ALICE_ADDR1});
             assert.fail();
         } catch (e) {
+            assert(e.toString().includes('revert'));
             /// console.log("expected failure: ", e);
         }
         // query alice addr 2

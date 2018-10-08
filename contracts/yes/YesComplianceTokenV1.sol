@@ -40,6 +40,9 @@ contract YesComplianceTokenV1 is ERC721Token /*, ERC165 :should: */ {
 
     /*
      todo events: entity updated, destroyed, ????
+     Finalized
+     Attested
+
      */
 
     /**
@@ -64,10 +67,9 @@ contract YesComplianceTokenV1 is ERC721Token /*, ERC165 :should: */ {
     // function getCountries(uint256 _validatorEntityId, address _address) external view returns(uint16[]  /* memory */);
 
     /**
-     * @notice create new tokens. the caller must have a control token. will fail if _to already
-     * belongs to a different entity. minting to any entity other than the one associated with the caller
-     * is only allowed by validators.
-     * @param _control true if the new token is a control token (can mint, burn)
+     * @notice create new tokens. fail if _to already
+     * belongs to a different entity and caller is not validator
+     * @param _control true if the new token is a control token (can mint, burn). aka NOT limited.
      * @param _entityId the entity to mint for, supply 0 to use the entity tied to the caller
      * @return the newly created token ID
      */
