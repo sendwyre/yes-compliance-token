@@ -1,4 +1,5 @@
 let YesComplianceTokenV1Impl = artifacts.require("YesComplianceTokenV1Impl");
+let BigNumber = require('bignumber.js');
 
 contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, ALICE_ADDR2, NONHOLDER_ACCOUNT1, VERIFIER_A_ADDR1, VERIFIER_B_ADDR1]) {
     let contract;
@@ -11,7 +12,7 @@ contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, A
 
     let USA_CODE = 840;
     let INDIVIDUAL_FULL_COMPLIANCE = 1;
-    let ACCREDITED_INVESTOR = 1;
+    let ACCREDITED_INVESTOR = 2;
     let ECOSYSTEM_VALIDATOR = 129;
 
     beforeEach('setup contract for each test', async function () {
@@ -44,7 +45,7 @@ contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, A
         assert.equal(queryResult, false);
     });
 
-    it("should allow yes specific clearing", async function () {
+    it("should allow yes-specific clearing", async function () {
         await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](VERIFIER_A_ADDR1, ENTITY_VERIFIER_A, true, 0, [ECOSYSTEM_VALIDATOR], {from: owner, gas: 1000000});
 
         let queryResult = await contract.isYes.call(0, VERIFIER_A_ADDR1, 0, ECOSYSTEM_VALIDATOR);
@@ -71,26 +72,84 @@ contract('YesComplianceTokenV1Impl', function ([owner, ALICE_ADDR1, BOB_ADDR1, A
         assert.equal(queryResult, false);
     });
 
-    it("should allow yes country-wide clearing", async function () {
+    it("should allow country-wide clearing", async function () {
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](VERIFIER_A_ADDR1, ENTITY_VERIFIER_A, true, 0, [ECOSYSTEM_VALIDATOR], {from: owner, gas: 1000000});
+
+        let r1 = await contract.isYes.call(0, VERIFIER_A_ADDR1, 0, ECOSYSTEM_VALIDATOR);
+        assert.equal(r1, true);
+
+        // issue token for alice from verifier
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](ALICE_ADDR1, ENTITY_ALICE, true, USA_CODE, [INDIVIDUAL_FULL_COMPLIANCE, ACCREDITED_INVESTOR], {from: VERIFIER_A_ADDR1, gas: 1000000});
+        r1 = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(r1, true);
+        r1 = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, ACCREDITED_INVESTOR);
+        assert.equal(r1, true);
+
+        // clear wrong one
+        await contract.contract.clearYes['uint256,uint16'](ENTITY_ALICE, USA_CODE+1, {from: VERIFIER_A_ADDR1});
+        r1 = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(r1, true);
+
+        // clear right one
+        await contract.contract.clearYes['uint256,uint16'](ENTITY_ALICE, USA_CODE, {from: VERIFIER_A_ADDR1, gas: 1000000});
+        r1 = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(r1, false);
+        r1 = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, ACCREDITED_INVESTOR);
+        assert.equal(r1, false);
+    });
+
+    it("should allow entity-wide clearing", async function () {
         await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](VERIFIER_A_ADDR1, ENTITY_VERIFIER_A, true, 0, [ECOSYSTEM_VALIDATOR], {from: owner, gas: 1000000});
 
         let queryResult = await contract.isYes.call(0, VERIFIER_A_ADDR1, 0, ECOSYSTEM_VALIDATOR);
         assert.equal(queryResult, true);
 
         // issue token for alice from verifier
-        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](ALICE_ADDR1, ENTITY_ALICE, true, USA_CODE, [INDIVIDUAL_FULL_COMPLIANCE], {from: VERIFIER_A_ADDR1, gas: 1000000});
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](ALICE_ADDR1, ENTITY_ALICE, true, USA_CODE, [INDIVIDUAL_FULL_COMPLIANCE, ACCREDITED_INVESTOR], {from: VERIFIER_A_ADDR1, gas: 1000000});
         queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, ACCREDITED_INVESTOR);
         assert.equal(queryResult, true);
 
         // clear wrong one
-        await contract.contract.clearYes['uint256,uint16'](ENTITY_ALICE, USA_CODE+1, {from: VERIFIER_A_ADDR1});
+        await contract.contract.clearYes['uint256'](ENTITY_BOB, {from: VERIFIER_A_ADDR1});
         queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, ACCREDITED_INVESTOR);
         assert.equal(queryResult, true);
 
         // clear right one
-        await contract.contract.clearYes['uint256,uint16'](ENTITY_ALICE, USA_CODE, {from: VERIFIER_A_ADDR1});
+        await contract.contract.clearYes['uint256'](ENTITY_ALICE, {from: VERIFIER_A_ADDR1, gas: 1000000});
         queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
         assert.equal(queryResult, false);
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, ACCREDITED_INVESTOR);
+        assert.equal(queryResult, false);
+    });
+
+    it("should return all marks for country-wide query", async function () {
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](VERIFIER_A_ADDR1, ENTITY_VERIFIER_A, true, 0, [ECOSYSTEM_VALIDATOR], {from: owner, gas: 1000000});
+
+        let queryResult = await contract.isYes.call(0, VERIFIER_A_ADDR1, 0, ECOSYSTEM_VALIDATOR);
+        assert.equal(queryResult, true);
+
+        // issue token for alice from verifier
+        await contract.contract.mint['address,uint256,bool,uint16,uint8[]'](ALICE_ADDR1, ENTITY_ALICE, true, USA_CODE, [INDIVIDUAL_FULL_COMPLIANCE, ACCREDITED_INVESTOR], {from: VERIFIER_A_ADDR1, gas: 1000000});
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, INDIVIDUAL_FULL_COMPLIANCE);
+        assert.equal(queryResult, true);
+        queryResult = await contract.isYes.call(0, ALICE_ADDR1, USA_CODE, ACCREDITED_INVESTOR);
+        assert.equal(queryResult, true);
+
+        // make sure both are there
+        queryResult = await contract.getYes.call(0, ALICE_ADDR1, USA_CODE);
+        assert.deepEqual(queryResult[0].toNumber(), INDIVIDUAL_FULL_COMPLIANCE);
+        assert.deepEqual(queryResult[1].toNumber(), ACCREDITED_INVESTOR);
+        assert.equal(queryResult.length, 2);
+
+        // should be empty
+        queryResult = await contract.getYes.call(0, ALICE_ADDR1, USA_CODE + 1);
+        assert.equal(queryResult.length, 0);
+        queryResult = await contract.getYes.call(0, BOB_ADDR1, USA_CODE);
+        assert.equal(queryResult.length, 0);
     });
 
     it("should have functioning finalization", async function () {

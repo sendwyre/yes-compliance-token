@@ -61,19 +61,19 @@ The validator may mint and send a new token to the end-user, which is linked to 
 attestation marks. Once they possess a token, they're then free to create more tokens 
 and distribute them to any other addresses they would like to identify with (via the increasingly well-known ERC721).
 
+Attempting to move a token to an address that already possesses a token linking it to a different address is forbidden;
+one address can be associated with at most a single entity (but one address could own many tokens linked to that single
+entity).
+
+Integrators query the token to discover the compliance status of any particular user. 
+(via `isYes` 
+or `requireYes`) without specifying an explicit set of allowable validators implies any validator is considered.
+
 ***Validators*** are entities with the `129. Ecosystem Validator` YES mark. They are the parties who are
 interacting with the end-user to process their proof of identity, and they have reporting (and liability?)
 agreements established with the ecosystem owner. This gives that entity the ability to create new YES attestations 
 for any entity. (Though, only the ecosystem owner has the ability to mark entities with with `129`) 
 For auditability, all YES attestations marked carry the set of validator ID(s) which validated them. 
-
-Attempting to move a token to an address that already possesses a token linking it to a different address is forbidden;
-one address can be associated with at most a single entity (but one address could own many tokens linked to that single
-entity).
-
-As such, any entity may have many tokens which all link back to a single record of compliance (entity). That entity
-consists of a collection of specific attestations as defined by the section below. Querying the token (via `isYes` 
-or `requireYes`) without specifying an explicit set of allowable validators implies any validator is considered. 
 
 ***Locking:*** An entity may be locked. This may be invoked by any validator against any entity and suspends that entity from 
 receiving any compliance approval. This is intended to function in response to any type of compliance flag that throws
@@ -108,22 +108,19 @@ what happens with those funds. This ensures there are proper channels for legal 
 This proof is provided as a chain of liable, well-identified parties. However, privacy should be maintained as best 
 as possible. I should not need to know the details of the person with whom I'm interacting; merely, I should have 
 trustworthy evidence that they are capable of bearing responsibility for their actions. This comes as a guarantee
-from a liable party, the ecosystem owner. 
+from a liable party, the ecosystem owner.
  
 All ongoing reporting and fraud prevention is then the responsibility of the ecosystem owner, which may have 
 delegated it further (through agreements) with other parties (validators). An integrator needn't treat
-tokens differently which have been validated by differing parties (unless they want to). 
+tokens differently which have been validated by differing parties (unless they want to).
 
 In the cases of businesses which custodialize their customers' funds, they must (at the least, in the US) be licensed 
 money service businesses. They must follow all relevant reporting requirements as dictated by their business practices
 in their own locality, and this protocol does nothing to alleviate those requirements. However, this protocol does
-offer an avenue to enable simpler offloading of this relatively rigorous process to any of the validators in the 
+offer an avenue to offload this relatively rigorous process to a set of the validators in the 
 ecosystem. By forming an agreement with a validator, enabling an end-user UX flow for such processing, they can gain
-access to a much larger body of verified customers through the on-chain query API. 
+access to a much larger body of verified customers through the on-chain query API.
 
-By offering channels which give compliant users access to other compliant users, we
-create a very flexible but legally safe financial environment on the blockchain. This reduction in friction will 
-increase access to the rapidly burgeoning innovation coming from the cryptocurrency space. 
 
 #### YES Marks: Compliance Attestation Codes
 
@@ -167,6 +164,10 @@ todo
 - limited/finalization for security
 - single-token-many-verifier
 - 
+
+In offering channels which give compliant users access to other compliant users, we
+create a very flexible but legally safe financial environment on the blockchain. This reduction in friction will 
+increase access to the rapidly burgeoning innovation coming from the cryptocurrency space. 
 
 
     

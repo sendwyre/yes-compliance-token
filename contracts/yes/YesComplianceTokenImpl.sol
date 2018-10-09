@@ -150,9 +150,41 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
         require(isYes_I(_validatorEntityId, _address, _countryCode, _yes));
     }
 
-    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[]) {
-        uint8[] memory r;
-        // todo implement meeee
+    function getYes(uint256 _validatorEntityId, address _address, uint16 _countryCode) external view returns(uint8[] memory) {
+        if(balanceOf(_address) == 0)
+            return new uint8[](0);
+
+        uint256 entityId = entityIdByTokenId[tokenOfOwnerByIndex(_address, 0)];
+        EntityRecord storage e = entityRecordById[entityId];
+        uint256 j = 0;
+        uint256 i;
+
+        // locked always bails
+        if(e.locked)
+            return new uint8[](0);
+
+        uint8[] memory r = new uint8[](e.yesMarkKeys.length);
+
+        for(i = 0; i < e.yesMarkKeys.length; i++) {
+            YesMark storage m = e.yesMarkByKey[e.yesMarkKeys[i]];
+
+            // filter country code
+            if(m.countryCode != _countryCode)
+                continue;
+
+            // filter explicit validator entity
+            if(_validatorEntityId > 0
+                    && m.validatorEntityIdIdx[_validatorEntityId] == 0
+                    && (m.validatorEntityIds.length == 0 || m.validatorEntityIds[0] == _validatorEntityId))
+                continue;
+
+            // matched, chyess
+            r[j++] = m.yes;
+        }
+
+        // reduce array length
+        assembly { mstore(r, j) }
+
         return r;
     }
 
@@ -266,9 +298,9 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
         require(_yes > 0);
         require(_yes != 128);
 
-        // special check against 129 validator mark
-        if(_yes == 129)
-            require(senderIsEcosystemControl(), 'not authorized as ecosystem control (129)'); // this is duplicating some things, gas leak
+        // special check against reserved country code 0
+        if(_countryCode == 0)
+            require(senderIsEcosystemControl(), 'not authorized as ecosystem control'); // this is duplicating some things, gas leak
 
         EntityRecord storage e = entity(_entityId);
 
@@ -286,43 +318,37 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
             return;
         }
 
-        // it is in fact set by this validator
-        uint32 idx = mark.validatorEntityIdIdx[callerEntityId];
-        mark.validatorEntityIds[idx] = mark.validatorEntityIds[mark.validatorEntityIds.length - 1];
-        mark.validatorEntityIds.length--;
-        delete mark.validatorEntityIdIdx[callerEntityId];
-
-        // check if the entire mark needs deleting
-        if(mark.validatorEntityIds.length == 0) {
-            // yes, it does. swap/delete
-            idx = mark.yesMarkIdx;
-            e.yesMarkKeys[idx] = e.yesMarkKeys[e.yesMarkKeys.length - 1];
-            e.yesMarkKeys.length--;
-
-            // update tracked index
-            if(e.yesMarkKeys.length > idx)
-                e.yesMarkByKey[e.yesMarkKeys[idx]].yesMarkIdx = idx;
-
-            // delete mark
-            mark.countryCode = 0;
-            mark.yes = 0;
-            mark.yesMarkIdx = 0;
-            // assert(mark.validatorEntityIds.length == 0);
-        }
+        clearYes_I(mark, e, callerEntityId);
     }
 
     function clearYes(uint256 _entityId, uint16 _countryCode) external permission_validator {
-        // todo implement meee
-//        EntityRecord storage e = entity(_entityId);
-//        // uint len = s.yesMarks.length;
-//        for(uint i = 0; i< e.yesMarks.length; i++) {
-//            YesMark storage mark = e.yesMarks[i];
-//            if(mark.countryCode != _countryCode)
-//                continue;
-//            e.yesMarks[i] = e.yesMarks[e.yesMarks.length-1];
-//            delete e.yesMarks[e.yesMarks.length - 1]; // i think is unnecessary, but have seen peeps do this...
-//            e.yesMarks.length--;
-//        }
+        // special check against 129 validator mark
+        if(_countryCode == 0)
+            require(senderIsEcosystemControl(), 'not authorized as ecosystem control (129)'); // this is duplicating some things, gas leak
+
+        EntityRecord storage e = entity(_entityId);
+
+        uint256 callerTokenId = tokenOfOwnerByIndex(msg.sender, 0);
+        uint256 callerEntityId = entityIdByTokenId[callerTokenId];
+        uint256 i;
+
+        for(i =0; i<e.yesMarkKeys.length; i++) {
+            YesMark storage mark = e.yesMarkByKey[e.yesMarkKeys[i]];
+
+            if(mark.countryCode != _countryCode)
+                continue;
+
+            if(mark.validatorEntityIdIdx[callerEntityId] == 0 &&
+                    (mark.validatorEntityIds.length == 0 || mark.validatorEntityIds[0] != callerEntityId)) {
+                // set, but not by this validator, skip
+                continue;
+            }
+
+            if(clearYes_I(mark, e, callerEntityId)) {
+                // mark was fully destroyed (and replaced in e.yesMarkKeys with the last one)
+                i--;
+            }
+        }
     }
 
     function clearYes(uint256 _entityId) external permission_validator {
@@ -358,15 +384,66 @@ contract YesComplianceTokenV1Impl is Upgradeable, YesComplianceTokenV1 {
 
     // Internal Methods ------------------------------------------------------------------------------------------------
 
+    function clearYes_I(YesMark storage mark, EntityRecord storage e, uint256 validatorEntityId) internal returns(bool) {
+        uint32 idx = mark.validatorEntityIdIdx[validatorEntityId];
+        mark.validatorEntityIds[idx] = mark.validatorEntityIds[mark.validatorEntityIds.length - 1];
+        mark.validatorEntityIds.length--;
+        delete mark.validatorEntityIdIdx[validatorEntityId];
+
+        // remap
+        if(mark.validatorEntityIds.length > idx)
+            mark.validatorEntityIdIdx[mark.validatorEntityIds[idx]] = idx;
+
+        // check if the entire mark needs deleting
+        if(mark.validatorEntityIds.length == 0) {
+            // yes, it does. swap/delete
+            idx = mark.yesMarkIdx;
+            e.yesMarkKeys[idx] = e.yesMarkKeys[e.yesMarkKeys.length - 1];
+            e.yesMarkKeys.length--;
+
+            // remap
+            if(e.yesMarkKeys.length > idx)
+                e.yesMarkByKey[e.yesMarkKeys[idx]].yesMarkIdx = idx;
+
+            // delete mark
+            mark.countryCode = 0;
+            mark.yes = 0;
+            mark.yesMarkIdx = 0;
+            // assert(mark.validatorEntityIds.length == 0);
+
+            return true;
+        }
+
+        return false;
+    }
+
     function clearYes_I(uint256 _entityId) internal {
-        // todo write me
-//        EntityRecord storage e = entity(_entityId);
-//        uint len = e.yesMarks.length;
-//        for(uint i = 0; i<len; i++) {
-//            YesMark storage mark = e.yesMarks[i];
-//            delete e.yesMarksByKey[yesKey(mark.countryCode, mark.yes)];
-//        }
-//        e.yesMarks.length = 0;
+        require(_entityId != OWNER_ENTITY_ID);
+
+        EntityRecord storage e = entity(_entityId);
+
+        // only ecosystem control can touch validators
+        if(!senderIsEcosystemControl())
+            require(e.yesMarkByKey[yesKey(0, YESMARK_VALIDATOR)].yes == 0);
+
+        uint256 callerTokenId = tokenOfOwnerByIndex(msg.sender, 0);
+        uint256 callerEntityId = entityIdByTokenId[callerTokenId];
+        uint256 i;
+
+        for(i =0; i<e.yesMarkKeys.length; i++) {
+            YesMark storage mark = e.yesMarkByKey[e.yesMarkKeys[i]];
+
+            if(mark.validatorEntityIdIdx[callerEntityId] == 0 &&
+                    (mark.validatorEntityIds.length == 0 || mark.validatorEntityIds[0] != callerEntityId)) {
+                // set, but not by this validator
+                continue;
+            }
+
+            if(clearYes_I(mark, e, callerEntityId)) {
+                // mark was fully destroyed (and replaced in e.yesMarkKeys with the last one)
+                i--;
+            }
+        }
     }
 
     function isYes_I(uint256 _validatorEntityId, address _address, uint16 _countryCode, uint8 _yes) internal view returns(bool) {
