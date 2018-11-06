@@ -13,7 +13,7 @@ We're really trying to ensure that we communicate what we're proposing as clearl
 Our intentions here are to propose a solution to the regulatory barriers that are slowing down new developments and accessibility in financial services. 
 
 1. Overview of the _ERC: DeFi_ proposal - [Link](https://github.com/sendwyre/EIPs/blob/master/EIPS/eip-compliance-token.md)
-2. Interface Definition - [Link](https://github.com/sendwyre/EIP-Resources/blob/master/Interface.md)
+2. Interface Definition - [Link](https://github.com/sendwyre/yes-compliance-token/blob/master/docs/Interface.md)
 3. Draft Implementation & Tests - [Link](https://github.com/sendwyre/yes-compliance-token)
-4. Potential Impacts - [Link](https://github.com/sendwyre/EIP-Resources/blob/master/Potential%20Impacts.md) 
-5. Proposal ELI5 w/practical examples - [Link](https://github.com/sendwyre/EIP-Resources/blob/master/ELI5.md)
+4. Potential Impacts - [Link](https://github.com/sendwyre/yes-compliance-token/blob/master/docs/Potential%20Impacts.md) 
+5. Proposal ELI5 w/practical examples - [Link](https://github.com/sendwyre/yes-compliance-token/blob/master/docs/ELI5.md)
