@@ -10,10 +10,31 @@ Key requirements:
 
 We're really trying to ensure that we communicate what we're proposing as clearly as possible, that way we're getting the most meaningful feedback (positive or negative) and fostering a solid community discussion.
 
-Our intentions here are to propose a solution to the regulatory barriers that are slowing down new developments and accessibility in financial services. 
+Our intentions here are to propose a solution to the regulatory barriers that are slowing down new developments and accessibility in financial services. Below is a list of helpful docs. Included a sample of what the documents look like given the mix of readers this is for.  
 
 1. Overview of the _ERC: DeFi_ proposal - [Link](https://github.com/sendwyre/EIPs/blob/master/EIPS/eip-compliance-token.md)
+
+_// Preview below_
+
+![Preview1](https://i.imgur.com/QufVCoP.png)
+
 2. Interface Definition - [Link](https://github.com/sendwyre/yes-compliance-token/blob/master/docs/Interface.md)
+
+_// Preview below_
+![Preview2](https://i.imgur.com/Ec4skwd.png)
+
 3. Draft Implementation & Tests - [Link](https://github.com/sendwyre/yes-compliance-token)
-4. Potential Impacts - [Link](https://github.com/sendwyre/yes-compliance-token/blob/master/docs/Potential%20Impacts.md) 
+
+_// Preview below_
+![Preview3](https://i.imgur.com/EylFpE0.png)
+
+4. Potential Impacts - [Link](https://github.com/sendwyre/yes-compliance-token/blob/master/docs/Potential%20Impacts.md)
+
+_// Preview below_
+![Preview4](https://i.imgur.com/qABiieb.png)
+
 5. Proposal ELI5 w/practical examples - [Link](https://github.com/sendwyre/yes-compliance-token/blob/master/docs/ELI5.md)
+
+_// Preview below_
+![Preview5](https://i.imgur.com/Fit0Le4.png)
+
